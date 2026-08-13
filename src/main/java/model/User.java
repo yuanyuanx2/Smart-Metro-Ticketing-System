@@ -13,8 +13,7 @@ public abstract class User {
 
     // 2. Constructor - initialize a User object with the required information
     public User(String userId, String name, String email,
-                String password, UserRole role)
-    {
+                String password, UserRole role) {
 
         this.userId = userId;
         this.name = name;
@@ -24,8 +23,8 @@ public abstract class User {
     }
 
     // 3. Getter methods - provide controlled access to user information
-    // purposely didn't include getPassword()
-    // to avoid other classes retrieve user's Password
+    // Password getter is purposely omitted to prevent other classes
+    // from directly retrieving the user's password
     public String getUserId() {
         return userId;
     }
@@ -40,5 +39,25 @@ public abstract class User {
 
     public UserRole getRole() {
         return role;
+    }
+
+    // 4. Login method - verify the email and password entered by the user
+    public boolean login(String email, String password) {
+        return this.email.equals(email) &&
+                this.password.equals(password);
+    }
+
+    // 5. View profile - display the user's basic profile information
+    public void viewProfile() {
+        System.out.println("User ID : " + userId);
+        System.out.println("Name    : " + name);
+        System.out.println("Email   : " + email);
+        System.out.println("Role    : " + role);
+    }
+
+    // 6. Edit profile - update the user's name and email
+    public void editProfile(String name, String email) {
+        this.name = name;
+        this.email = email;
     }
 }
