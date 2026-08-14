@@ -51,4 +51,22 @@ public class UserService {
         // Throw a custom exception when login credentials are incorrect
         throw new InvalidLoginException("Invalid email or password.");
     }
+
+    // 5. View all users - display the profile of every registered user
+    public void viewAllUsers() {
+
+        // Display a message if no users are currently registered
+        if (users.isEmpty()) {
+            System.out.println("No registered users found.");
+            return;
+        }
+
+        System.out.println("===== REGISTERED USERS =====");
+
+        // Loop through every User object stored in the HashMap
+        for (User user : users.values()) {
+            user.viewProfile();
+            System.out.println("----------------------------");
+        }
+    }
 }
