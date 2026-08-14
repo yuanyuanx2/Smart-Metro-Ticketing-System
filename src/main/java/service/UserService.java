@@ -11,7 +11,7 @@ import java.util.HashMap;
  */
 public class UserService {
 
-    // 1. User collection - store registered users using email as the key
+    // 1. User collection - store registered users using user ID as the stable key
     private HashMap<String, User> users;
 
     // 2. Constructor - initialize an empty user collection
@@ -38,14 +38,22 @@ public class UserService {
             return;
         }
 
-        // Prevent registration if the email is already used
-        if (users.containsKey(email)) {
-            System.out.println("Registration failed: Email is already registered.");
+        // Prevent registration if the user ID is already used
+        if (users.containsKey(userId)) {
+            System.out.println("Registration failed: User ID is already registered.");
             return;
         }
 
-        // Store the email as the key and the User object as the value
-        users.put(email, user);
+        // Prevent registration if the email is already used
+        for (User existingUser : users.values()) {
+            if (existingUser.getEmail().equalsIgnoreCase(email)) {
+                System.out.println("Registration failed: Email is already registered.");
+                return;
+            }
+        }
+
+        // Store the user ID as the key and the User object as the value
+        users.put(userId, user);
 
         System.out.println("Registration successful.");
     }
@@ -54,12 +62,12 @@ public class UserService {
     public User login(String email, String password)
             throws InvalidLoginException {
 
-        // Retrieve the user using email as the HashMap key
-        User user = users.get(email);
+        // Search through registered users for matching login credentials
+        for (User user : users.values()) {
 
-        // Check that the user exists and the password is correct
-        if (user != null && user.login(email, password)) {
-            return user;
+            if (user.login(email, password)) {
+                return user;
+            }
         }
 
         // Throw a custom exception when login credentials are incorrect
