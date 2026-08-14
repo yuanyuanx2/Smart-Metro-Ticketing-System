@@ -1,5 +1,6 @@
 package service;
 
+import exception.InvalidLoginException;
 import model.User;
 
 import java.util.HashMap;
@@ -10,7 +11,7 @@ import java.util.HashMap;
  */
 public class UserService {
 
-    // 1. User collection - store users using email as the unique key
+    // 1. User collection - store registered users using email as the key
     private HashMap<String, User> users;
 
     // 2. Constructor - initialize an empty user collection
@@ -23,13 +24,31 @@ public class UserService {
 
         String email = user.getEmail();
 
+        // Prevent registration if the email is already used
         if (users.containsKey(email)) {
             System.out.println("Registration failed: Email is already registered.");
             return;
         }
 
+        // Store the email as the key and the User object as the value
         users.put(email, user);
 
         System.out.println("Registration successful.");
+    }
+
+    // 4. Login - return the matching user if the credentials are correct
+    public User login(String email, String password)
+            throws InvalidLoginException {
+
+        // Retrieve the user using email as the HashMap key
+        User user = users.get(email);
+
+        // Check that the user exists and the password is correct
+        if (user != null && user.login(email, password)) {
+            return user;
+        }
+
+        // Throw a custom exception when login credentials are incorrect
+        throw new InvalidLoginException("Invalid email or password.");
     }
 }
