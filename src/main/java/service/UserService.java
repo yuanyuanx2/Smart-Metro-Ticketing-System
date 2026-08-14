@@ -19,10 +19,24 @@ public class UserService {
         this.users = new HashMap<>();
     }
 
-    // 3. Register user - add a new user if the email is not already registered
+    // 3. Register user - validate and add a new user to the collection
     public void registerUser(User user) {
 
+        String userId = user.getUserId();
+        String name = user.getName();
         String email = user.getEmail();
+
+        // Reject reserved "|" character because it will be used for TXT file storage
+        if (userId.contains("|") || name.contains("|") || email.contains("|")) {
+            System.out.println("Registration failed: The character '|' is not allowed.");
+            return;
+        }
+
+        // Validate that the email follows a basic email format
+        if (!email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+            System.out.println("Registration failed: Invalid email format.");
+            return;
+        }
 
         // Prevent registration if the email is already used
         if (users.containsKey(email)) {
