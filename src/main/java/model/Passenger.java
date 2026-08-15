@@ -34,4 +34,16 @@ public class Passenger extends User {
             System.out.println("Top up amount must be greater than RM 0.00.");
         }
     }
+
+    // 5. Buy ticket method - deduct the ticket fare from the passenger's wallet balance
+    public void buyTicket(Ticket ticket) {
+
+        // Check whether the passenger has enough balance
+        if (balance < ticket.getFare()) {
+            throw new IllegalArgumentException("Insufficient balance.");
+        }
+
+        // Deduct the ticket fare from the passenger's wallet
+        balance -= ticket.getFare();
+    }
 }
