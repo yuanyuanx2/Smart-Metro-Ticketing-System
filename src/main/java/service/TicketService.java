@@ -37,7 +37,6 @@ public class TicketService {
         // Generate a simple unique ticket ID.
         String ticketId = String.format("TKT%03d", tickets.size() + 1);
 
-        // Create a new active ticket.
         Ticket ticket = new Ticket(
                 ticketId,
                 passenger,
@@ -48,7 +47,10 @@ public class TicketService {
                 fare
         );
 
-        // Store the new ticket.
+        // Deduct the ticket fare from the passenger's wallet.
+        passenger.buyTicket(ticket);
+
+        // Store the ticket only after the purchase is successful.
         tickets.add(ticket);
 
         return ticket;
