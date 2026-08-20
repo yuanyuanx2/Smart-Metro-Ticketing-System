@@ -20,13 +20,12 @@ public class FileHandlingTest {
         testData.add("Pasar Seni");
         testData.add("Masjid Jamek");
 
+        // Test 1: Normal save and load
         try {
 
-            // Test saving data
             fileManager.saveData(testData, fileName);
             System.out.println("Data saved successfully.");
 
-            // Test loading data
             Object loadedData = fileManager.loadData(fileName);
 
             System.out.println("\nLoaded data:");
@@ -43,6 +42,21 @@ public class FileHandlingTest {
         } catch (FileProcessingException e) {
 
             System.out.println("File processing error: " + e.getMessage());
+        }
+
+        // Test 2: Load a file that does not exist
+        System.out.println("\nTesting missing file:");
+
+        try {
+
+            fileManager.loadData(
+                    "src/main/resources/data/does_not_exist.txt"
+            );
+
+        } catch (FileProcessingException e) {
+
+            System.out.println("Exception handled successfully.");
+            System.out.println(e.getMessage());
         }
     }
 }
