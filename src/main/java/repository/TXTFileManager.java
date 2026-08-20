@@ -1,6 +1,7 @@
 package repository;
 
 import exception.FileProcessingException;
+import model.Station;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -24,12 +25,12 @@ public class TXTFileManager implements FileManager {
             if (data instanceof Iterable<?> collection) {
 
                 for (Object item : collection) {
-                    writer.write(String.valueOf(item));
+                    writer.write(convertToText(item));
                     writer.newLine();
                 }
 
             } else {
-                writer.write(String.valueOf(data));
+                writer.write(convertToText(data));
                 writer.newLine();
             }
 
@@ -44,7 +45,7 @@ public class TXTFileManager implements FileManager {
     public Object loadData(String fileName)
             throws FileProcessingException {
 
-        ArrayList<String> data = new ArrayList<>();
+        ArrayList<Object> data = new ArrayList<>();
 
         try (BufferedReader reader =
                      new BufferedReader(new FileReader(fileName))) {
@@ -52,7 +53,7 @@ public class TXTFileManager implements FileManager {
             String line;
 
             while ((line = reader.readLine()) != null) {
-                data.add(line);
+                data.add(convertFromText(line));
             }
 
         } catch (IOException e) {
@@ -62,5 +63,54 @@ public class TXTFileManager implements FileManager {
         }
 
         return data;
+    }
+
+    /**
+     * Converts supported Java objects into TXT records.
+     */
+    private String convertToText(Object item)
+            throws FileProcessingException {
+
+        if (item instanceof Station station) {
+
+            return "STATION|"
+                    + station.getStationId() + "|"
+                    + station.getName() + "|"
+                    + station.getLocation();
+        }
+
+        if (item instanceof String text) {
+            return text;
+        }
+
+        throw new FileProcessingException(
+                "Unsupported data type for TXT saving."
+        );
+    }
+
+    /**
+     * Converts TXT records back into Java objects.
+     */
+    private Object convertFromText(String line)
+            throws FileProcessingException {
+
+        if (line.startsWith("STATION|")) {
+
+            String[] parts = line.split("\\|", -1);
+
+            if (parts.length != 4) {
+                throw new FileProcessingException(
+                        "Invalid station data: " + line
+                );
+            }
+
+            return new Station(
+                    parts[1],
+                    parts[2],
+                    parts[3]
+            );
+        }
+
+        return line;
     }
 }
