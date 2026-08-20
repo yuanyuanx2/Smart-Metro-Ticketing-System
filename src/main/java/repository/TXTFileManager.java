@@ -1,6 +1,7 @@
 package repository;
 
 import exception.FileProcessingException;
+import model.Route;
 import model.Station;
 import model.Train;
 
@@ -86,6 +87,15 @@ public class TXTFileManager implements FileManager {
                     + train.getTrainId() + "|"
                     + train.getTrainName() + "|"
                     + train.getCapacity();
+        }
+
+        if (item instanceof Route route) {
+
+            return "ROUTE|"
+                    + route.getRouteId() + "|"
+                    + route.getSource().getStationId() + "|"
+                    + route.getDestination().getStationId() + "|"
+                    + route.calculateDistance();
         }
 
         if (item instanceof String text) {
