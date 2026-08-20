@@ -11,11 +11,18 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Handles saving and loading data using TXT files.
  */
 public class TXTFileManager implements FileManager {
+
+    /**
+     * Stores loaded stations by station ID so that Route objects
+     * can reuse the correct Station objects when loaded.
+     */
+    private final HashMap<String, Station> stationLookup = new HashMap<>();
 
     @Override
     public void saveData(Object data, String fileName)
@@ -37,6 +44,7 @@ public class TXTFileManager implements FileManager {
             }
 
         } catch (IOException e) {
+
             throw new FileProcessingException(
                     "Unable to save data to file: " + fileName
             );
@@ -59,6 +67,7 @@ public class TXTFileManager implements FileManager {
             }
 
         } catch (IOException e) {
+
             throw new FileProcessingException(
                     "Unable to load data from file: " + fileName
             );
@@ -123,11 +132,18 @@ public class TXTFileManager implements FileManager {
                 );
             }
 
-            return new Station(
+            Station station = new Station(
                     parts[1],
                     parts[2],
                     parts[3]
             );
+
+            stationLookup.put(
+                    station.getStationId(),
+                    station
+            );
+
+            return station;
         }
 
         if (line.startsWith("TRAIN|")) {
@@ -154,6 +170,47 @@ public class TXTFileManager implements FileManager {
 
                 throw new FileProcessingException(
                         "Invalid train capacity: " + line
+                );
+            }
+        }
+
+        if (line.startsWith("ROUTE|")) {
+
+            String[] parts = line.split("\\|", -1);
+
+            if (parts.length != 5) {
+                throw new FileProcessingException(
+                        "Invalid route data: " + line
+                );
+            }
+
+            Station source = stationLookup.get(parts[2]);
+            Station destination = stationLookup.get(parts[3]);
+
+            if (source == null || destination == null) {
+
+                throw new FileProcessingException(
+                        "Route refers to a station that has not been loaded: "
+                                + line
+                );
+            }
+
+            try {
+
+                double distanceKm =
+                        Double.parseDouble(parts[4]);
+
+                return new Route(
+                        parts[1],
+                        source,
+                        destination,
+                        distanceKm
+                );
+
+            } catch (NumberFormatException e) {
+
+                throw new FileProcessingException(
+                        "Invalid route distance: " + line
                 );
             }
         }
