@@ -3,9 +3,8 @@ package model;
 import enums.TicketStatus;
 import enums.TicketType;
 
-/**
- * Represents a metro ticket purchased by a passenger.
- */
+import java.time.LocalDateTime;
+
 public class Ticket {
 
     private String ticketId;
@@ -16,9 +15,10 @@ public class Ticket {
     private TicketStatus status;
     private double fare;
 
-    /**
-     * Creates a new ticket with its required information.
-     */
+    // Extra field for monthly reporting and future file storage
+    private LocalDateTime purchaseDateTime;
+
+    // Original constructor kept so existing code will continue working
     public Ticket(String ticketId,
                   Passenger passenger,
                   Station source,
@@ -27,6 +27,20 @@ public class Ticket {
                   TicketStatus status,
                   double fare) {
 
+        this(ticketId, passenger, source, destination,
+                ticketType, status, fare, LocalDateTime.now());
+    }
+
+    // Additional constructor useful for loading saved tickets and testing reports
+    public Ticket(String ticketId,
+                  Passenger passenger,
+                  Station source,
+                  Station destination,
+                  TicketType ticketType,
+                  TicketStatus status,
+                  double fare,
+                  LocalDateTime purchaseDateTime) {
+
         this.ticketId = ticketId;
         this.passenger = passenger;
         this.source = source;
@@ -34,46 +48,46 @@ public class Ticket {
         this.ticketType = ticketType;
         this.status = status;
         this.fare = fare;
+
+        if (purchaseDateTime == null) {
+            this.purchaseDateTime = LocalDateTime.now();
+        } else {
+            this.purchaseDateTime = purchaseDateTime;
+        }
     }
 
-    // Returns the ticket ID.
     public String getTicketId() {
         return ticketId;
     }
 
-    // Returns the passenger who owns the ticket.
     public Passenger getPassenger() {
         return passenger;
     }
 
-    // Returns the source station.
     public Station getSource() {
         return source;
     }
 
-    // Returns the destination station.
     public Station getDestination() {
         return destination;
     }
 
-    // Returns the selected ticket type.
     public TicketType getTicketType() {
         return ticketType;
     }
 
-    // Returns the current ticket status.
     public TicketStatus getStatus() {
         return status;
     }
 
-    // Returns the ticket fare.
     public double getFare() {
         return fare;
     }
 
-    /**
-     * Displays the ticket information.
-     */
+    public LocalDateTime getPurchaseDateTime() {
+        return purchaseDateTime;
+    }
+
     public void printTicket() {
         System.out.println("Ticket ID: " + ticketId);
         System.out.println("Passenger: " + passenger.getName());
@@ -84,9 +98,6 @@ public class Ticket {
         System.out.printf("Fare: RM%.2f%n", fare);
     }
 
-    /**
-     * Cancels the ticket by changing its status.
-     */
     public void cancelTicket() {
         status = TicketStatus.CANCELLED;
     }
