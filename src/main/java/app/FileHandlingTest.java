@@ -1,6 +1,7 @@
 package app;
 
 import exception.FileProcessingException;
+import model.Station;
 import repository.FileManager;
 import repository.TXTFileManager;
 
@@ -12,51 +13,63 @@ public class FileHandlingTest {
 
         FileManager fileManager = new TXTFileManager();
 
-        String fileName = "src/main/resources/data/file_test.txt";
+        String fileName = "src/main/resources/data/stations_test.txt";
 
-        ArrayList<String> testData = new ArrayList<>();
+        ArrayList<Station> stations = new ArrayList<>();
 
-        testData.add("KL Sentral");
-        testData.add("Pasar Seni");
-        testData.add("Masjid Jamek");
+        stations.add(new Station(
+                "S001",
+                "KL Sentral",
+                "Kuala Lumpur"
+        ));
 
-        // Test 1: Normal save and load
+        stations.add(new Station(
+                "S002",
+                "Pasar Seni",
+                "Kuala Lumpur"
+        ));
+
+        stations.add(new Station(
+                "S003",
+                "Masjid Jamek",
+                "Kuala Lumpur"
+        ));
+
         try {
 
-            fileManager.saveData(testData, fileName);
-            System.out.println("Data saved successfully.");
+            // Save Station objects
+            fileManager.saveData(stations, fileName);
 
+            System.out.println("Stations saved successfully.");
+
+            // Load Station objects
             Object loadedData = fileManager.loadData(fileName);
 
-            System.out.println("\nLoaded data:");
+            System.out.println("\nLoaded stations:");
 
             if (loadedData instanceof ArrayList<?>) {
 
                 ArrayList<?> data = (ArrayList<?>) loadedData;
 
                 for (Object item : data) {
-                    System.out.println(item);
+
+                    if (item instanceof Station station) {
+
+                        System.out.printf(
+                                "%-4s | %-12s | %s%n",
+                                station.getStationId(),
+                                station.getName(),
+                                station.getLocation()
+                        );
+                    }
                 }
             }
 
         } catch (FileProcessingException e) {
 
-            System.out.println("File processing error: " + e.getMessage());
-        }
-
-        // Test 2: Load a file that does not exist
-        System.out.println("\nTesting missing file:");
-
-        try {
-
-            fileManager.loadData(
-                    "src/main/resources/data/does_not_exist.txt"
+            System.out.println(
+                    "File processing error: " + e.getMessage()
             );
-
-        } catch (FileProcessingException e) {
-
-            System.out.println("Exception handled successfully.");
-            System.out.println(e.getMessage());
         }
     }
 }
