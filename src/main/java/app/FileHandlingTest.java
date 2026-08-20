@@ -1,7 +1,7 @@
 package app;
 
 import exception.FileProcessingException;
-import model.Station;
+import model.Train;
 import repository.FileManager;
 import repository.TXTFileManager;
 
@@ -13,39 +13,39 @@ public class FileHandlingTest {
 
         FileManager fileManager = new TXTFileManager();
 
-        String fileName = "src/main/resources/data/stations_test.txt";
+        String fileName = "src/main/resources/data/trains_test.txt";
 
-        ArrayList<Station> stations = new ArrayList<>();
+        ArrayList<Train> trains = new ArrayList<>();
 
-        stations.add(new Station(
-                "S001",
-                "KL Sentral",
-                "Kuala Lumpur"
+        trains.add(new Train(
+                "T001",
+                "Metro Express",
+                300
         ));
 
-        stations.add(new Station(
-                "S002",
-                "Pasar Seni",
-                "Kuala Lumpur"
+        trains.add(new Train(
+                "T002",
+                "City Line",
+                250
         ));
 
-        stations.add(new Station(
-                "S003",
-                "Masjid Jamek",
-                "Kuala Lumpur"
+        trains.add(new Train(
+                "T003",
+                "Rapid Metro",
+                350
         ));
 
         try {
 
-            // Save Station objects
-            fileManager.saveData(stations, fileName);
+            // Save Train objects
+            fileManager.saveData(trains, fileName);
 
-            System.out.println("Stations saved successfully.");
+            System.out.println("Trains saved successfully.");
 
-            // Load Station objects
+            // Load Train objects
             Object loadedData = fileManager.loadData(fileName);
 
-            System.out.println("\nLoaded stations:");
+            System.out.println("\nLoaded trains:");
 
             if (loadedData instanceof ArrayList<?>) {
 
@@ -53,13 +53,13 @@ public class FileHandlingTest {
 
                 for (Object item : data) {
 
-                    if (item instanceof Station station) {
+                    if (item instanceof Train train) {
 
                         System.out.printf(
-                                "%-4s | %-12s | %s%n",
-                                station.getStationId(),
-                                station.getName(),
-                                station.getLocation()
+                                "%-4s | %-13s | %d%n",
+                                train.getTrainId(),
+                                train.getTrainName(),
+                                train.getCapacity()
                         );
                     }
                 }
