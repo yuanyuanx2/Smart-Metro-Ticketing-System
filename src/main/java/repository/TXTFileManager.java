@@ -2,6 +2,7 @@ package repository;
 
 import exception.FileProcessingException;
 import model.Station;
+import model.Train;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -79,6 +80,14 @@ public class TXTFileManager implements FileManager {
                     + station.getLocation();
         }
 
+        if (item instanceof Train train) {
+
+            return "TRAIN|"
+                    + train.getTrainId() + "|"
+                    + train.getTrainName() + "|"
+                    + train.getCapacity();
+        }
+
         if (item instanceof String text) {
             return text;
         }
@@ -109,6 +118,34 @@ public class TXTFileManager implements FileManager {
                     parts[2],
                     parts[3]
             );
+        }
+
+        if (line.startsWith("TRAIN|")) {
+
+            String[] parts = line.split("\\|", -1);
+
+            if (parts.length != 4) {
+                throw new FileProcessingException(
+                        "Invalid train data: " + line
+                );
+            }
+
+            try {
+
+                int capacity = Integer.parseInt(parts[3]);
+
+                return new Train(
+                        parts[1],
+                        parts[2],
+                        capacity
+                );
+
+            } catch (NumberFormatException e) {
+
+                throw new FileProcessingException(
+                        "Invalid train capacity: " + line
+                );
+            }
         }
 
         return line;
