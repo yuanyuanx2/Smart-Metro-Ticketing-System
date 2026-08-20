@@ -15,11 +15,17 @@ public class Route {
      */
     public Route(String routeId, Station source,
                  Station destination, double distanceKm) {
-
         this.routeId = routeId;
         this.source = source;
         this.destination = destination;
         this.distanceKm = distanceKm;
+    }
+
+    /**
+     * Returns the route ID.
+     */
+    public String getRouteId() {
+        return routeId;
     }
 
     /**
