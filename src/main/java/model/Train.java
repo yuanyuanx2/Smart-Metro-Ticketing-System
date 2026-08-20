@@ -18,6 +18,18 @@ public class Train {
         this.capacity = capacity;
     }
 
+    public String getTrainId() {
+        return trainId;
+    }
+
+    public String getTrainName() {
+        return trainName;
+    }
+
+    public int getCapacity() {
+        return capacity;
+    }
+
     /**
      * Displays the train information.
      */
