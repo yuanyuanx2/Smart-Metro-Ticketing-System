@@ -36,6 +36,12 @@ public abstract class User {
     public String getEmail() {
         return email;
     }
+    /**
+     * Returns the password for file persistence.
+     */
+    public String getPassword() {
+        return password;
+    }
 
     public UserRole getRole() {
         return role;
