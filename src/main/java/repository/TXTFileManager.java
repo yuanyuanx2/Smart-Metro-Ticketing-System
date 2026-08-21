@@ -1,10 +1,13 @@
 package repository;
 
+import enums.TicketStatus;
+import enums.TicketType;
 import exception.FileProcessingException;
 import model.Admin;
 import model.Passenger;
 import model.Route;
 import model.Station;
+import model.Ticket;
 import model.Train;
 
 import java.io.BufferedReader;
@@ -12,6 +15,8 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,17 +26,9 @@ import java.util.Map;
  */
 public class TXTFileManager implements FileManager {
 
-    /**
-     * Stores loaded stations by station ID so Route objects
-     * can reuse the correct Station objects.
-     */
     private final HashMap<String, Station> stationLookup =
             new HashMap<>();
 
-    /**
-     * Stores loaded passengers by user ID so Ticket objects
-     * can reuse the correct Passenger objects later.
-     */
     private final HashMap<String, Passenger> passengerLookup =
             new HashMap<>();
 
@@ -145,6 +142,19 @@ public class TXTFileManager implements FileManager {
                     + route.calculateDistance();
         }
 
+        if (item instanceof Ticket ticket) {
+
+            return "TICKET|"
+                    + ticket.getTicketId() + "|"
+                    + ticket.getPassenger().getUserId() + "|"
+                    + ticket.getSource().getStationId() + "|"
+                    + ticket.getDestination().getStationId() + "|"
+                    + ticket.getTicketType() + "|"
+                    + ticket.getStatus() + "|"
+                    + ticket.getFare() + "|"
+                    + ticket.getPurchaseDateTime();
+        }
+
         if (item instanceof String text) {
             return text;
         }
@@ -227,11 +237,12 @@ public class TXTFileManager implements FileManager {
                 );
             }
 
-            Station station = new Station(
-                    parts[1],
-                    parts[2],
-                    parts[3]
-            );
+            Station station =
+                    new Station(
+                            parts[1],
+                            parts[2],
+                            parts[3]
+                    );
 
             stationLookup.put(
                     station.getStationId(),
@@ -310,6 +321,73 @@ public class TXTFileManager implements FileManager {
 
                 throw new FileProcessingException(
                         "Invalid route distance: " + line
+                );
+            }
+        }
+
+        if (line.startsWith("TICKET|")) {
+
+            String[] parts = line.split("\\|", -1);
+
+            if (parts.length != 9) {
+                throw new FileProcessingException(
+                        "Invalid ticket data: " + line
+                );
+            }
+
+            Passenger passenger =
+                    passengerLookup.get(parts[2]);
+
+            Station source =
+                    stationLookup.get(parts[3]);
+
+            Station destination =
+                    stationLookup.get(parts[4]);
+
+            if (passenger == null) {
+                throw new FileProcessingException(
+                        "Ticket refers to a passenger that has not been loaded: "
+                                + line
+                );
+            }
+
+            if (source == null || destination == null) {
+                throw new FileProcessingException(
+                        "Ticket refers to a station that has not been loaded: "
+                                + line
+                );
+            }
+
+            try {
+
+                TicketType ticketType =
+                        TicketType.valueOf(parts[5]);
+
+                TicketStatus status =
+                        TicketStatus.valueOf(parts[6]);
+
+                double fare =
+                        Double.parseDouble(parts[7]);
+
+                LocalDateTime purchaseDateTime =
+                        LocalDateTime.parse(parts[8]);
+
+                return new Ticket(
+                        parts[1],
+                        passenger,
+                        source,
+                        destination,
+                        ticketType,
+                        status,
+                        fare,
+                        purchaseDateTime
+                );
+
+            } catch (IllegalArgumentException |
+                     DateTimeParseException e) {
+
+                throw new FileProcessingException(
+                        "Invalid ticket data: " + line
                 );
             }
         }
