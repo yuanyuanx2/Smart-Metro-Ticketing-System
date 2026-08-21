@@ -1,8 +1,11 @@
 package app;
 
+import enums.TicketStatus;
+import enums.TicketType;
 import enums.UserRole;
 import exception.FileProcessingException;
 import exception.InvalidLoginException;
+import fare.FareCalculator;
 import fare.StandardFareCalculator;
 import model.Passenger;
 import model.Route;
@@ -10,7 +13,11 @@ import model.Station;
 import model.Ticket;
 import model.Train;
 import model.User;
+import payment.CardPayment;
+import payment.CashPayment;
+import payment.Payment;
 import repository.TXTFileManager;
+import service.PaymentService;
 import service.RouteService;
 import service.StationService;
 import service.TicketService;
@@ -45,9 +52,9 @@ public class Main {
             "src/main/resources/data/tickets.txt";
 
     /*
-     * One shared TXTFileManager is required so that
-     * loaded Routes and Tickets reuse the correct
-     * Station and Passenger objects.
+     * Shared TXTFileManager.
+     * This preserves Passenger/Station object relationships
+     * when Routes and Tickets are restored.
      */
     private static final TXTFileManager fileManager =
             new TXTFileManager();
@@ -55,8 +62,17 @@ public class Main {
     private static final HashMap<String, User> users =
             new HashMap<>();
 
+    private static final ArrayList<Route> routes =
+            new ArrayList<>();
+
     private static final ArrayList<Ticket> tickets =
             new ArrayList<>();
+
+    private static final FareCalculator fareCalculator =
+            new StandardFareCalculator();
+
+    private static final PaymentService paymentService =
+            new PaymentService();
 
     private static UserService userService;
     private static StationService stationService;
@@ -67,7 +83,7 @@ public class Main {
     public static void main(String[] args) {
 
         /*
-         * Important relationship/load order:
+         * Required loading relationship/order:
          *
          * 1. Users
          * 2. Stations
@@ -261,6 +277,8 @@ public class Main {
      */
     private static void loadRoutes() {
 
+        routes.clear();
+
         routeService =
                 new RouteService();
 
@@ -274,6 +292,10 @@ public class Main {
                 for (Object item : loadedRoutes) {
 
                     if (item instanceof Route route) {
+
+                        routes.add(
+                                route
+                        );
 
                         routeService.addRoute(
                                 route
@@ -301,10 +323,6 @@ public class Main {
 
     /**
      * Loads tickets from TXT storage.
-     *
-     * The shared TXTFileManager ensures each loaded
-     * Ticket uses the existing Passenger and Station
-     * objects that were loaded earlier.
      */
     private static void loadTickets() {
 
@@ -346,13 +364,13 @@ public class Main {
 
         ticketService =
                 new TicketService(
-                        new StandardFareCalculator(),
+                        fareCalculator,
                         tickets
                 );
     }
 
     /**
-     * Registers a new Passenger account.
+     * Registers a new Passenger.
      */
     private static void registerPassenger() {
 
@@ -363,22 +381,18 @@ public class Main {
         );
 
         System.out.print("Passenger ID: ");
-
         String userId =
                 scanner.nextLine().trim();
 
         System.out.print("Name: ");
-
         String name =
                 scanner.nextLine().trim();
 
         System.out.print("Email: ");
-
         String email =
                 scanner.nextLine().trim();
 
         System.out.print("Password: ");
-
         String password =
                 scanner.nextLine();
 
@@ -390,8 +404,7 @@ public class Main {
             System.out.println();
 
             System.out.println(
-                    "Registration failed: "
-                            + "All fields are required."
+                    "Registration failed: All fields are required."
             );
 
             waitForBack();
@@ -417,7 +430,7 @@ public class Main {
     }
 
     /**
-     * Handles Passenger and Admin login.
+     * Handles login.
      */
     private static void login() {
 
@@ -486,7 +499,7 @@ public class Main {
     }
 
     /**
-     * Displays and handles the Passenger menu.
+     * Passenger menu.
      */
     private static void passengerMenu(
             Passenger passenger) {
@@ -529,6 +542,12 @@ public class Main {
                     break;
 
                 case "5":
+                    buyTicket(
+                            passenger
+                    );
+                    break;
+
+                case "6":
                     viewPassengerTickets(
                             passenger
                     );
@@ -547,7 +566,7 @@ public class Main {
     }
 
     /**
-     * Displays the Passenger menu.
+     * Displays Passenger menu.
      */
     private static void displayPassengerMenu(
             Passenger passenger) {
@@ -595,7 +614,11 @@ public class Main {
         );
 
         System.out.println(
-                "5. View My Tickets"
+                "5. Buy Ticket"
+        );
+
+        System.out.println(
+                "6. View My Tickets"
         );
 
         System.out.println(
@@ -608,7 +631,7 @@ public class Main {
     }
 
     /**
-     * Displays the Passenger profile.
+     * Displays Passenger profile.
      */
     private static void viewPassengerProfile(
             Passenger passenger) {
@@ -630,7 +653,7 @@ public class Main {
     }
 
     /**
-     * Handles Passenger wallet top up.
+     * Handles Passenger wallet top-up.
      */
     private static void topUpBalance(
             Passenger passenger) {
@@ -667,8 +690,7 @@ public class Main {
         } catch (NumberFormatException e) {
 
             System.out.println(
-                    "Invalid amount. "
-                            + "Please enter a valid number."
+                    "Invalid amount. Please enter a valid number."
             );
         }
 
@@ -676,7 +698,7 @@ public class Main {
     }
 
     /**
-     * Displays available metro stations.
+     * Displays Stations.
      */
     private static void viewStations() {
 
@@ -694,7 +716,7 @@ public class Main {
     }
 
     /**
-     * Displays available metro routes.
+     * Displays Routes.
      */
     private static void viewRoutes() {
 
@@ -712,8 +734,579 @@ public class Main {
     }
 
     /**
-     * Displays only tickets belonging to
-     * the currently logged-in Passenger.
+     * Passenger ticket purchasing workflow.
+     *
+     * Route
+     * -> Ticket Type
+     * -> Fare
+     * -> Active Ticket Warning
+     * -> Balance Check
+     * -> Payment
+     * -> Ticket Creation
+     *
+     * Ticket creation only occurs AFTER
+     * successful payment.
+     */
+    private static void buyTicket(
+            Passenger passenger) {
+
+        clearScreen();
+
+        System.out.println(
+                "========== BUY TICKET =========="
+        );
+
+        System.out.println();
+
+        if (routes.isEmpty()) {
+
+            System.out.println(
+                    "No routes are currently available."
+            );
+
+            waitForBack();
+
+            return;
+        }
+
+        routeService.viewRoutes();
+
+        System.out.println();
+
+        System.out.print(
+                "Enter Route ID or X to go back: "
+        );
+
+        String routeId =
+                scanner.nextLine().trim();
+
+        if (routeId.equalsIgnoreCase("X")) {
+            return;
+        }
+
+        Route selectedRoute =
+                findRouteById(
+                        routeId
+                );
+
+        if (selectedRoute == null) {
+
+            showMessage(
+                    "Route not found."
+            );
+
+            return;
+        }
+
+        TicketType ticketType =
+                selectTicketType();
+
+        if (ticketType == null) {
+            return;
+        }
+
+        double fare =
+                fareCalculator.calculateFare(
+                        selectedRoute,
+                        ticketType
+                );
+
+        /*
+         * Warn Passenger if ACTIVE tickets
+         * already exist.
+         *
+         * This warning does not automatically
+         * reject the purchase.
+         */
+        boolean continuePurchase =
+                confirmActiveTicketWarning(
+                        passenger,
+                        selectedRoute,
+                        ticketType
+                );
+
+        if (!continuePurchase) {
+
+            showMessage(
+                    "Purchase cancelled."
+            );
+
+            return;
+        }
+
+        clearScreen();
+
+        System.out.println(
+                "========== PURCHASE SUMMARY =========="
+        );
+
+        System.out.println();
+
+        System.out.println(
+                "Route       : "
+                        + selectedRoute
+                        .getSource()
+                        .getName()
+                        + " -> "
+                        + selectedRoute
+                        .getDestination()
+                        .getName()
+        );
+
+        System.out.println(
+                "Ticket Type : "
+                        + ticketType
+        );
+
+        System.out.printf(
+                "Fare        : RM %.2f%n",
+                fare
+        );
+
+        System.out.printf(
+                "Balance     : RM %.2f%n",
+                passenger.getBalance()
+        );
+
+        System.out.println();
+
+        /*
+         * Insufficient balance is checked
+         * before Payment processing.
+         */
+        if (passenger.getBalance() < fare) {
+
+            System.out.println(
+                    "Insufficient balance."
+            );
+
+            System.out.println(
+                    "Please top up your balance before purchasing."
+            );
+
+            waitForBack();
+
+            return;
+        }
+
+        System.out.print(
+                "Confirm purchase? (Y/N): "
+        );
+
+        String confirmation =
+                scanner.nextLine().trim();
+
+        if (!confirmation.equalsIgnoreCase("Y")) {
+
+            showMessage(
+                    "Purchase cancelled."
+            );
+
+            return;
+        }
+
+        Payment payment =
+                selectPaymentMethod();
+
+        if (payment == null) {
+            return;
+        }
+
+        /*
+         * PAYMENT COMES FIRST.
+         *
+         * No Ticket object has been created yet.
+         */
+        boolean paymentSuccessful =
+                paymentService.processPayment(
+                        payment,
+                        fare
+                );
+
+        if (!paymentSuccessful) {
+
+            clearScreen();
+
+            System.out.println(
+                    "Payment failed."
+            );
+
+            System.out.println(
+                    "No ticket was created."
+            );
+
+            waitForBack();
+
+            return;
+        }
+
+        /*
+         * Only after successful payment
+         * is the Ticket created and stored.
+         */
+        try {
+
+            Ticket ticket =
+                    ticketService.buyTicket(
+                            passenger,
+                            selectedRoute,
+                            ticketType
+                    );
+
+            clearScreen();
+
+            System.out.println(
+                    "========== PAYMENT SUCCESSFUL =========="
+            );
+
+            System.out.println();
+
+            System.out.println(
+                    "Payment completed successfully."
+            );
+
+            System.out.println(
+                    "Your ticket has now been issued."
+            );
+
+            System.out.println();
+
+            ticket.printTicket();
+
+            System.out.println();
+
+            System.out.printf(
+                    "Remaining Balance: RM %.2f%n",
+                    passenger.getBalance()
+            );
+
+        } catch (IllegalArgumentException e) {
+
+            clearScreen();
+
+            System.out.println(
+                    "Ticket purchase failed: "
+                            + e.getMessage()
+            );
+        }
+
+        waitForBack();
+    }
+
+    /**
+     * Warns Passenger when ACTIVE ticket(s)
+     * already exist.
+     *
+     * Exact duplicate:
+     * - Same Passenger
+     * - Same Source
+     * - Same Destination
+     * - Same Ticket Type
+     * - ACTIVE
+     *
+     * Passenger may still continue purchasing.
+     */
+    private static boolean confirmActiveTicketWarning(
+            Passenger passenger,
+            Route selectedRoute,
+            TicketType selectedTicketType) {
+
+        int activeTicketCount = 0;
+
+        Ticket exactDuplicate =
+                null;
+
+        for (Ticket ticket : tickets) {
+
+            if (ticket.getPassenger() == passenger
+                    && ticket.getStatus()
+                    == TicketStatus.ACTIVE) {
+
+                activeTicketCount++;
+
+                boolean sameRoute =
+                        ticket.getSource()
+                                == selectedRoute.getSource()
+                                && ticket.getDestination()
+                                == selectedRoute.getDestination();
+
+                boolean sameType =
+                        ticket.getTicketType()
+                                == selectedTicketType;
+
+                if (sameRoute
+                        && sameType
+                        && exactDuplicate == null) {
+
+                    exactDuplicate =
+                            ticket;
+                }
+            }
+        }
+
+        /*
+         * No ACTIVE tickets.
+         * No warning required.
+         */
+        if (activeTicketCount == 0) {
+            return true;
+        }
+
+        clearScreen();
+
+        System.out.println(
+                "========== ACTIVE TICKET WARNING =========="
+        );
+
+        System.out.println();
+
+        /*
+         * Stronger warning for exact duplicate.
+         */
+        if (exactDuplicate != null) {
+
+            System.out.println(
+                    "You already have an ACTIVE ticket"
+            );
+
+            System.out.println(
+                    "for the same route and ticket type."
+            );
+
+            System.out.println();
+
+            System.out.println(
+                    "Existing ticket:"
+            );
+
+            System.out.println();
+
+            exactDuplicate.printTicket();
+
+        } else {
+
+            System.out.println(
+                    "You currently have "
+                            + activeTicketCount
+                            + " ACTIVE ticket(s)."
+            );
+
+            System.out.println();
+
+            System.out.println(
+                    "Please make sure this new ticket"
+            );
+
+            System.out.println(
+                    "does not conflict with your travel plans."
+            );
+        }
+
+        System.out.println();
+
+        System.out.println(
+                "New ticket:"
+        );
+
+        System.out.println();
+
+        System.out.println(
+                "Route       : "
+                        + selectedRoute
+                        .getSource()
+                        .getName()
+                        + " -> "
+                        + selectedRoute
+                        .getDestination()
+                        .getName()
+        );
+
+        System.out.println(
+                "Ticket Type : "
+                        + selectedTicketType
+        );
+
+        System.out.println();
+
+        while (true) {
+
+            System.out.print(
+                    "Continue with purchase? (Y/N): "
+            );
+
+            String choice =
+                    scanner.nextLine().trim();
+
+            if (choice.equalsIgnoreCase("Y")) {
+                return true;
+            }
+
+            if (choice.equalsIgnoreCase("N")) {
+                return false;
+            }
+
+            System.out.println(
+                    "Invalid choice. Please enter Y or N."
+            );
+        }
+    }
+
+    /**
+     * Selects Ticket Type.
+     */
+    private static TicketType selectTicketType() {
+
+        while (true) {
+
+            clearScreen();
+
+            System.out.println(
+                    "========== TICKET TYPE =========="
+            );
+
+            System.out.println();
+
+            System.out.println(
+                    "1. Single Ticket"
+            );
+
+            System.out.println(
+                    "2. Daily Ticket"
+            );
+
+            System.out.println(
+                    "3. Monthly Ticket"
+            );
+
+            System.out.println();
+
+            System.out.println(
+                    "[X] Back"
+            );
+
+            System.out.println();
+
+            System.out.print(
+                    "Enter choice: "
+            );
+
+            String choice =
+                    scanner.nextLine().trim();
+
+            switch (choice) {
+
+                case "1":
+                    return TicketType.SINGLE;
+
+                case "2":
+                    return TicketType.DAILY;
+
+                case "3":
+                    return TicketType.MONTHLY;
+
+                case "X":
+                case "x":
+                    return null;
+
+                default:
+                    showMessage(
+                            "Invalid ticket type."
+                    );
+            }
+        }
+    }
+
+    /**
+     * Selects Payment implementation.
+     *
+     * Payment reference demonstrates polymorphism.
+     */
+    private static Payment selectPaymentMethod() {
+
+        while (true) {
+
+            clearScreen();
+
+            System.out.println(
+                    "========== PAYMENT METHOD =========="
+            );
+
+            System.out.println();
+
+            System.out.println(
+                    "1. Cash Payment"
+            );
+
+            System.out.println(
+                    "2. Card Payment"
+            );
+
+            System.out.println();
+
+            System.out.println(
+                    "[X] Back"
+            );
+
+            System.out.println();
+
+            System.out.print(
+                    "Enter choice: "
+            );
+
+            String choice =
+                    scanner.nextLine().trim();
+
+            switch (choice) {
+
+                case "1":
+                    return new CashPayment();
+
+                case "2":
+
+                    System.out.print(
+                            "Enter card number: "
+                    );
+
+                    String cardNumber =
+                            scanner.nextLine().trim();
+
+                    return new CardPayment(
+                            cardNumber
+                    );
+
+                case "X":
+                case "x":
+                    return null;
+
+                default:
+                    showMessage(
+                            "Invalid payment method."
+                    );
+            }
+        }
+    }
+
+    /**
+     * Finds Route by ID.
+     */
+    private static Route findRouteById(
+            String routeId) {
+
+        for (Route route : routes) {
+
+            if (route.getRouteId()
+                    .equalsIgnoreCase(routeId)) {
+
+                return route;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Displays only Tickets belonging to
+     * the logged-in Passenger.
      */
     private static void viewPassengerTickets(
             Passenger passenger) {
@@ -730,13 +1323,8 @@ public class Main {
 
         for (Ticket ticket : tickets) {
 
-            /*
-             * Loaded Tickets reuse the same Passenger
-             * object, so this preserves the object
-             * relationship rather than matching
-             * duplicated passenger information.
-             */
-            if (ticket.getPassenger() == passenger) {
+            if (ticket.getPassenger()
+                    == passenger) {
 
                 ticket.printTicket();
 
@@ -759,7 +1347,7 @@ public class Main {
     }
 
     /**
-     * Displays the main application menu.
+     * Displays Main Menu.
      */
     private static void displayMainMenu() {
 
@@ -795,7 +1383,7 @@ public class Main {
     }
 
     /**
-     * Displays a message and waits for the user.
+     * Displays message.
      */
     private static void showMessage(
             String message) {
@@ -810,7 +1398,7 @@ public class Main {
     }
 
     /**
-     * Waits until X is entered.
+     * Waits for X.
      */
     private static void waitForBack() {
 
@@ -836,7 +1424,7 @@ public class Main {
     }
 
     /**
-     * Clears the visible console.
+     * Clears visible console.
      */
     private static void clearScreen() {
 
