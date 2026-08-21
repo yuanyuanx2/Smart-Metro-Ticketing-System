@@ -1,0 +1,3 @@
+TRAIN|T001|Metro Express|300
+TRAIN|T002|City Line|250
+TRAIN|T003|Rapid Metro|350

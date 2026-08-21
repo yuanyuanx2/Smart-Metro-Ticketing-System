@@ -1,0 +1,3 @@
+STATION|S001|KL Sentral|Kuala Lumpur
+STATION|S002|Pasar Seni|Kuala Lumpur
+STATION|S003|Masjid Jamek|Kuala Lumpur
