@@ -5,6 +5,7 @@ import enums.TicketType;
 import enums.UserRole;
 import exception.FileProcessingException;
 import exception.InvalidLoginException;
+import exception.TicketNotFoundException;
 import fare.FareCalculator;
 import fare.StandardFareCalculator;
 import model.Passenger;
@@ -53,8 +54,9 @@ public class Main {
 
     /*
      * Shared TXTFileManager.
-     * This preserves Passenger/Station object relationships
-     * when Routes and Tickets are restored.
+     *
+     * Using one instance preserves object relationships
+     * between loaded Passengers, Stations, Routes and Tickets.
      */
     private static final TXTFileManager fileManager =
             new TXTFileManager();
@@ -103,7 +105,9 @@ public class Main {
 
             displayMainMenu();
 
-            System.out.print("Enter choice: ");
+            System.out.print(
+                    "Enter choice: "
+            );
 
             String choice =
                     scanner.nextLine().trim();
@@ -148,7 +152,9 @@ public class Main {
         try {
 
             Object loadedData =
-                    fileManager.loadData(USERS_FILE);
+                    fileManager.loadData(
+                            USERS_FILE
+                    );
 
             if (loadedData instanceof ArrayList<?> loadedUsers) {
 
@@ -181,7 +187,9 @@ public class Main {
         }
 
         userService =
-                new UserService(users);
+                new UserService(
+                        users
+                );
     }
 
     /**
@@ -195,7 +203,9 @@ public class Main {
         try {
 
             Object loadedData =
-                    fileManager.loadData(STATIONS_FILE);
+                    fileManager.loadData(
+                            STATIONS_FILE
+                    );
 
             if (loadedData instanceof ArrayList<?> loadedStations) {
 
@@ -240,7 +250,9 @@ public class Main {
         try {
 
             Object loadedData =
-                    fileManager.loadData(TRAINS_FILE);
+                    fileManager.loadData(
+                            TRAINS_FILE
+                    );
 
             if (loadedData instanceof ArrayList<?> loadedTrains) {
 
@@ -285,7 +297,9 @@ public class Main {
         try {
 
             Object loadedData =
-                    fileManager.loadData(ROUTES_FILE);
+                    fileManager.loadData(
+                            ROUTES_FILE
+                    );
 
             if (loadedData instanceof ArrayList<?> loadedRoutes) {
 
@@ -331,7 +345,9 @@ public class Main {
         try {
 
             Object loadedData =
-                    fileManager.loadData(TICKETS_FILE);
+                    fileManager.loadData(
+                            TICKETS_FILE
+                    );
 
             if (loadedData instanceof ArrayList<?> loadedTickets) {
 
@@ -380,19 +396,31 @@ public class Main {
                 "===== PASSENGER REGISTRATION ====="
         );
 
-        System.out.print("Passenger ID: ");
+        System.out.print(
+                "Passenger ID: "
+        );
+
         String userId =
                 scanner.nextLine().trim();
 
-        System.out.print("Name: ");
+        System.out.print(
+                "Name: "
+        );
+
         String name =
                 scanner.nextLine().trim();
 
-        System.out.print("Email: ");
+        System.out.print(
+                "Email: "
+        );
+
         String email =
                 scanner.nextLine().trim();
 
-        System.out.print("Password: ");
+        System.out.print(
+                "Password: "
+        );
+
         String password =
                 scanner.nextLine();
 
@@ -440,12 +468,16 @@ public class Main {
                 "========== LOGIN =========="
         );
 
-        System.out.print("Email: ");
+        System.out.print(
+                "Email: "
+        );
 
         String email =
                 scanner.nextLine().trim();
 
-        System.out.print("Password: ");
+        System.out.print(
+                "Password: "
+        );
 
         String password =
                 scanner.nextLine();
@@ -553,6 +585,12 @@ public class Main {
                     );
                     break;
 
+                case "7":
+                    cancelPassengerTicket(
+                            passenger
+                    );
+                    break;
+
                 case "0":
                     loggedIn = false;
                     break;
@@ -622,6 +660,10 @@ public class Main {
         );
 
         System.out.println(
+                "7. Cancel Ticket"
+        );
+
+        System.out.println(
                 "0. Logout"
         );
 
@@ -681,7 +723,9 @@ public class Main {
         try {
 
             double amount =
-                    Double.parseDouble(input);
+                    Double.parseDouble(
+                            input
+                    );
 
             passenger.topUp(
                     amount
@@ -744,7 +788,7 @@ public class Main {
      * -> Payment
      * -> Ticket Creation
      *
-     * Ticket creation only occurs AFTER
+     * Ticket creation occurs only after
      * successful payment.
      */
     private static void buyTicket(
@@ -811,13 +855,6 @@ public class Main {
                         ticketType
                 );
 
-        /*
-         * Warn Passenger if ACTIVE tickets
-         * already exist.
-         *
-         * This warning does not automatically
-         * reject the purchase.
-         */
         boolean continuePurchase =
                 confirmActiveTicketWarning(
                         passenger,
@@ -870,11 +907,8 @@ public class Main {
 
         System.out.println();
 
-        /*
-         * Insufficient balance is checked
-         * before Payment processing.
-         */
-        if (passenger.getBalance() < fare) {
+        if (passenger.getBalance()
+                < fare) {
 
             System.out.println(
                     "Insufficient balance."
@@ -913,9 +947,8 @@ public class Main {
         }
 
         /*
-         * PAYMENT COMES FIRST.
-         *
-         * No Ticket object has been created yet.
+         * Payment must succeed before
+         * Ticket creation.
          */
         boolean paymentSuccessful =
                 paymentService.processPayment(
@@ -940,10 +973,6 @@ public class Main {
             return;
         }
 
-        /*
-         * Only after successful payment
-         * is the Ticket created and stored.
-         */
         try {
 
             Ticket ticket =
@@ -996,15 +1025,6 @@ public class Main {
     /**
      * Warns Passenger when ACTIVE ticket(s)
      * already exist.
-     *
-     * Exact duplicate:
-     * - Same Passenger
-     * - Same Source
-     * - Same Destination
-     * - Same Ticket Type
-     * - ACTIVE
-     *
-     * Passenger may still continue purchasing.
      */
     private static boolean confirmActiveTicketWarning(
             Passenger passenger,
@@ -1018,7 +1038,8 @@ public class Main {
 
         for (Ticket ticket : tickets) {
 
-            if (ticket.getPassenger() == passenger
+            if (ticket.getPassenger()
+                    == passenger
                     && ticket.getStatus()
                     == TicketStatus.ACTIVE) {
 
@@ -1044,10 +1065,6 @@ public class Main {
             }
         }
 
-        /*
-         * No ACTIVE tickets.
-         * No warning required.
-         */
         if (activeTicketCount == 0) {
             return true;
         }
@@ -1060,9 +1077,6 @@ public class Main {
 
         System.out.println();
 
-        /*
-         * Stronger warning for exact duplicate.
-         */
         if (exactDuplicate != null) {
 
             System.out.println(
@@ -1152,6 +1166,224 @@ public class Main {
     }
 
     /**
+     * Passenger cancellation workflow.
+     *
+     * Only the logged-in Passenger's own Ticket
+     * can be cancelled.
+     *
+     * Only ACTIVE Tickets can be cancelled.
+     *
+     * Cancellation does not delete the Ticket.
+     * The status becomes CANCELLED.
+     */
+    private static void cancelPassengerTicket(
+            Passenger passenger) {
+
+        clearScreen();
+
+        System.out.println(
+                "========== CANCEL TICKET =========="
+        );
+
+        System.out.println();
+
+        boolean activeTicketFound =
+                false;
+
+        /*
+         * Display only this Passenger's ACTIVE Tickets.
+         */
+        for (Ticket ticket : tickets) {
+
+            if (ticket.getPassenger()
+                    == passenger
+                    && ticket.getStatus()
+                    == TicketStatus.ACTIVE) {
+
+                ticket.printTicket();
+
+                System.out.println(
+                        "-------------------------"
+                );
+
+                activeTicketFound =
+                        true;
+            }
+        }
+
+        if (!activeTicketFound) {
+
+            System.out.println(
+                    "You have no ACTIVE tickets to cancel."
+            );
+
+            waitForBack();
+
+            return;
+        }
+
+        System.out.println();
+
+        System.out.print(
+                "Enter Ticket ID or X to go back: "
+        );
+
+        String ticketId =
+                scanner.nextLine().trim();
+
+        if (ticketId.equalsIgnoreCase("X")) {
+            return;
+        }
+
+        /*
+         * First verify that the Ticket belongs
+         * to the logged-in Passenger.
+         */
+        Ticket selectedTicket =
+                findPassengerTicketById(
+                        passenger,
+                        ticketId
+                );
+
+        if (selectedTicket == null) {
+
+            showMessage(
+                    "Ticket not found for this passenger."
+            );
+
+            return;
+        }
+
+        /*
+         * USED or already CANCELLED Tickets
+         * cannot be cancelled again.
+         */
+        if (selectedTicket.getStatus()
+                != TicketStatus.ACTIVE) {
+
+            clearScreen();
+
+            System.out.println(
+                    "This ticket cannot be cancelled."
+            );
+
+            System.out.println(
+                    "Current status: "
+                            + selectedTicket.getStatus()
+            );
+
+            waitForBack();
+
+            return;
+        }
+
+        clearScreen();
+
+        System.out.println(
+                "========== CANCELLATION SUMMARY =========="
+        );
+
+        System.out.println();
+
+        selectedTicket.printTicket();
+
+        System.out.println();
+
+        while (true) {
+
+            System.out.print(
+                    "Confirm cancellation? (Y/N): "
+            );
+
+            String confirmation =
+                    scanner.nextLine().trim();
+
+            if (confirmation.equalsIgnoreCase("N")) {
+
+                showMessage(
+                        "Cancellation cancelled."
+                );
+
+                return;
+            }
+
+            if (confirmation.equalsIgnoreCase("Y")) {
+                break;
+            }
+
+            System.out.println(
+                    "Invalid choice. Please enter Y or N."
+            );
+        }
+
+        try {
+
+            /*
+             * Use TicketService as required by
+             * the lecturer's class design.
+             */
+            ticketService.cancelTicket(
+                    selectedTicket.getTicketId()
+            );
+
+            clearScreen();
+
+            System.out.println(
+                    "========== TICKET CANCELLED =========="
+            );
+
+            System.out.println();
+
+            System.out.println(
+                    "Ticket cancelled successfully."
+            );
+
+            System.out.println();
+
+            selectedTicket.printTicket();
+
+            System.out.println();
+
+            System.out.println(
+                    "The ticket remains stored for history and reporting."
+            );
+
+        } catch (TicketNotFoundException e) {
+
+            clearScreen();
+
+            System.out.println(
+                    "Cancellation failed: "
+                            + e.getMessage()
+            );
+        }
+
+        waitForBack();
+    }
+
+    /**
+     * Finds one Ticket belonging specifically
+     * to the logged-in Passenger.
+     */
+    private static Ticket findPassengerTicketById(
+            Passenger passenger,
+            String ticketId) {
+
+        for (Ticket ticket : tickets) {
+
+            if (ticket.getPassenger()
+                    == passenger
+                    && ticket.getTicketId()
+                    .equalsIgnoreCase(ticketId)) {
+
+                return ticket;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Selects Ticket Type.
      */
     private static TicketType selectTicketType() {
@@ -1218,8 +1450,6 @@ public class Main {
 
     /**
      * Selects Payment implementation.
-     *
-     * Payment reference demonstrates polymorphism.
      */
     private static Payment selectPaymentMethod() {
 
@@ -1305,8 +1535,8 @@ public class Main {
     }
 
     /**
-     * Displays only Tickets belonging to
-     * the logged-in Passenger.
+     * Displays only Tickets belonging
+     * to the logged-in Passenger.
      */
     private static void viewPassengerTickets(
             Passenger passenger) {
@@ -1319,7 +1549,8 @@ public class Main {
 
         System.out.println();
 
-        boolean found = false;
+        boolean found =
+                false;
 
         for (Ticket ticket : tickets) {
 
@@ -1332,7 +1563,8 @@ public class Main {
                         "-------------------------"
                 );
 
-                found = true;
+                found =
+                        true;
             }
         }
 
