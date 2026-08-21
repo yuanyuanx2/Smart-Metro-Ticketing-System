@@ -4,10 +4,14 @@ import enums.UserRole;
 import exception.FileProcessingException;
 import exception.InvalidLoginException;
 import model.Passenger;
+import model.Route;
 import model.Station;
+import model.Train;
 import model.User;
 import repository.TXTFileManager;
+import service.RouteService;
 import service.StationService;
+import service.TrainService;
 import service.UserService;
 
 import java.util.ArrayList;
@@ -28,31 +32,43 @@ public class Main {
     private static final String STATIONS_FILE =
             "src/main/resources/data/stations.txt";
 
+    private static final String TRAINS_FILE =
+            "src/main/resources/data/trains.txt";
+
+    private static final String ROUTES_FILE =
+            "src/main/resources/data/routes.txt";
+
     /*
-     * Shared TXTFileManager.
-     *
-     * The same instance must later be reused when loading
-     * stations, routes and tickets so object relationships
-     * can be reconstructed correctly.
+     * One shared TXTFileManager is used so loaded
+     * object relationships can be reconstructed correctly.
      */
     private static final TXTFileManager fileManager =
             new TXTFileManager();
 
-    // Shared user collection used by UserService and later file saving.
     private static final HashMap<String, User> users =
             new HashMap<>();
 
     private static UserService userService;
     private static StationService stationService;
+    private static TrainService trainService;
+    private static RouteService routeService;
 
     public static void main(String[] args) {
 
         /*
-         * Data must be loaded in the correct order.
-         * More data types will be connected in later checkpoints.
+         * Required startup loading order:
+         *
+         * 1. Users
+         * 2. Stations
+         * 3. Trains
+         * 4. Routes
+         *
+         * Tickets will be connected later.
          */
         loadUsers();
         loadStations();
+        loadTrains();
+        loadRoutes();
 
         boolean running = true;
 
@@ -96,7 +112,7 @@ public class Main {
     }
 
     /**
-     * Loads users from TXT storage and creates the UserService.
+     * Loads users from TXT storage.
      */
     private static void loadUsers() {
 
@@ -167,10 +183,6 @@ public class Main {
                 }
             }
 
-            /*
-             * Uses the Comparator sorting feature
-             * implemented previously.
-             */
             stationService.sortStationsByName();
 
         } catch (FileProcessingException e) {
@@ -184,6 +196,95 @@ public class Main {
 
             System.out.println(
                     "The system will continue with an empty station list."
+            );
+
+            waitForBack();
+        }
+    }
+
+    /**
+     * Loads trains from TXT storage.
+     */
+    private static void loadTrains() {
+
+        trainService =
+                new TrainService();
+
+        try {
+
+            Object loadedData =
+                    fileManager.loadData(TRAINS_FILE);
+
+            if (loadedData instanceof ArrayList<?> loadedTrains) {
+
+                for (Object item : loadedTrains) {
+
+                    if (item instanceof Train train) {
+
+                        trainService.addTrain(
+                                train
+                        );
+                    }
+                }
+            }
+
+        } catch (FileProcessingException e) {
+
+            clearScreen();
+
+            System.out.println(
+                    "Unable to load train data: "
+                            + e.getMessage()
+            );
+
+            System.out.println(
+                    "The system will continue with an empty train list."
+            );
+
+            waitForBack();
+        }
+    }
+
+    /**
+     * Loads routes from TXT storage.
+     *
+     * Routes reuse the Station objects already loaded
+     * by the shared TXTFileManager.
+     */
+    private static void loadRoutes() {
+
+        routeService =
+                new RouteService();
+
+        try {
+
+            Object loadedData =
+                    fileManager.loadData(ROUTES_FILE);
+
+            if (loadedData instanceof ArrayList<?> loadedRoutes) {
+
+                for (Object item : loadedRoutes) {
+
+                    if (item instanceof Route route) {
+
+                        routeService.addRoute(
+                                route
+                        );
+                    }
+                }
+            }
+
+        } catch (FileProcessingException e) {
+
+            clearScreen();
+
+            System.out.println(
+                    "Unable to load route data: "
+                            + e.getMessage()
+            );
+
+            System.out.println(
+                    "The system will continue with an empty route list."
             );
 
             waitForBack();
@@ -363,6 +464,10 @@ public class Main {
                     viewStations();
                     break;
 
+                case "4":
+                    viewRoutes();
+                    break;
+
                 case "0":
                     loggedIn = false;
                     break;
@@ -420,6 +525,10 @@ public class Main {
         );
 
         System.out.println(
+                "4. View Routes"
+        );
+
+        System.out.println(
                 "0. Logout"
         );
 
@@ -429,7 +538,7 @@ public class Main {
     }
 
     /**
-     * Displays the Passenger's profile and wallet balance.
+     * Displays the Passenger's profile.
      */
     private static void viewPassengerProfile(
             Passenger passenger) {
@@ -515,6 +624,24 @@ public class Main {
     }
 
     /**
+     * Displays all available metro routes.
+     */
+    private static void viewRoutes() {
+
+        clearScreen();
+
+        System.out.println(
+                "========== METRO ROUTES =========="
+        );
+
+        System.out.println();
+
+        routeService.viewRoutes();
+
+        waitForBack();
+    }
+
+    /**
      * Displays the main application menu.
      */
     private static void displayMainMenu() {
@@ -551,7 +678,7 @@ public class Main {
     }
 
     /**
-     * Displays a message and waits for the user to go back.
+     * Displays a message and waits for the user to return.
      */
     private static void showMessage(
             String message) {
@@ -592,8 +719,7 @@ public class Main {
     }
 
     /**
-     * Clears the visible console and moves the cursor
-     * back to the top-left corner.
+     * Clears the visible console.
      */
     private static void clearScreen() {
 
