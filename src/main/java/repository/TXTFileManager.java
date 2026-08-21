@@ -14,6 +14,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Handles saving and loading data using TXT files.
@@ -41,7 +42,14 @@ public class TXTFileManager implements FileManager {
         try (BufferedWriter writer =
                      new BufferedWriter(new FileWriter(fileName))) {
 
-            if (data instanceof Iterable<?> collection) {
+            if (data instanceof Map<?, ?> map) {
+
+                for (Object item : map.values()) {
+                    writer.write(convertToText(item));
+                    writer.newLine();
+                }
+
+            } else if (data instanceof Iterable<?> collection) {
 
                 for (Object item : collection) {
                     writer.write(convertToText(item));
@@ -49,6 +57,7 @@ public class TXTFileManager implements FileManager {
                 }
 
             } else {
+
                 writer.write(convertToText(data));
                 writer.newLine();
             }
