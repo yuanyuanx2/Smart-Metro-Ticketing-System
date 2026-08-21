@@ -19,39 +19,80 @@ public class TicketService {
     private FareCalculator fareCalculator;
 
     /**
-     * Creates a ticket service using the provided fare calculator.
+     * Creates a ticket service with an empty ticket list.
      */
     public TicketService(FareCalculator fareCalculator) {
-        this.tickets = new ArrayList<>();
+
+        this(
+                fareCalculator,
+                new ArrayList<>()
+        );
+    }
+
+    /**
+     * Creates a ticket service using an existing ticket list.
+     *
+     * This constructor is used when restoring tickets
+     * from TXT storage so the same collection can be
+     * shared throughout the application.
+     */
+    public TicketService(
+            FareCalculator fareCalculator,
+            ArrayList<Ticket> tickets) {
+
         this.fareCalculator = fareCalculator;
+
+        if (tickets == null) {
+            this.tickets = new ArrayList<>();
+        } else {
+            this.tickets = tickets;
+        }
     }
 
     /**
      * Creates and stores a new ticket for a passenger.
      */
-    public Ticket buyTicket(Passenger passenger, Route route, TicketType type) {
+    public Ticket buyTicket(
+            Passenger passenger,
+            Route route,
+            TicketType type) {
 
-        // Calculate the fare using the FareCalculator interface.
-        double fare = fareCalculator.calculateFare(route, type);
+        double fare =
+                fareCalculator.calculateFare(
+                        route,
+                        type
+                );
 
-        // Generate a simple unique ticket ID.
-        String ticketId = String.format("TKT%03d", tickets.size() + 1);
+        String ticketId =
+                String.format(
+                        "TKT%03d",
+                        tickets.size() + 1
+                );
 
-        Ticket ticket = new Ticket(
-                ticketId,
-                passenger,
-                route.getSource(),
-                route.getDestination(),
-                type,
-                TicketStatus.ACTIVE,
-                fare
+        Ticket ticket =
+                new Ticket(
+                        ticketId,
+                        passenger,
+                        route.getSource(),
+                        route.getDestination(),
+                        type,
+                        TicketStatus.ACTIVE,
+                        fare
+                );
+
+        /*
+         * Existing ticket-purchase behaviour.
+         *
+         * Payment sequencing will be integrated
+         * separately in a later checkpoint.
+         */
+        passenger.buyTicket(
+                ticket
         );
 
-        // Deduct the ticket fare from the passenger's wallet.
-        passenger.buyTicket(ticket);
-
-        // Store the ticket only after the purchase is successful.
-        tickets.add(ticket);
+        tickets.add(
+                ticket
+        );
 
         return ticket;
     }
@@ -59,18 +100,24 @@ public class TicketService {
     /**
      * Cancels a ticket using its ticket ID.
      */
-    public void cancelTicket(String ticketId) throws TicketNotFoundException {
+    public void cancelTicket(
+            String ticketId)
+            throws TicketNotFoundException {
 
         for (Ticket ticket : tickets) {
 
-            if (ticket.getTicketId().equals(ticketId)) {
+            if (ticket.getTicketId()
+                    .equals(ticketId)) {
+
                 ticket.cancelTicket();
+
                 return;
             }
         }
 
         throw new TicketNotFoundException(
-                "Ticket ID not found: " + ticketId
+                "Ticket ID not found: "
+                        + ticketId
         );
     }
 
@@ -80,13 +127,21 @@ public class TicketService {
     public void viewTickets() {
 
         if (tickets.isEmpty()) {
-            System.out.println("No tickets available.");
+
+            System.out.println(
+                    "No tickets available."
+            );
+
             return;
         }
 
         for (Ticket ticket : tickets) {
+
             ticket.printTicket();
-            System.out.println("-------------------------");
+
+            System.out.println(
+                    "-------------------------"
+            );
         }
     }
 }

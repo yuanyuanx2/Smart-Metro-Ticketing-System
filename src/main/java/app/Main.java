@@ -3,14 +3,17 @@ package app;
 import enums.UserRole;
 import exception.FileProcessingException;
 import exception.InvalidLoginException;
+import fare.StandardFareCalculator;
 import model.Passenger;
 import model.Route;
 import model.Station;
+import model.Ticket;
 import model.Train;
 import model.User;
 import repository.TXTFileManager;
 import service.RouteService;
 import service.StationService;
+import service.TicketService;
 import service.TrainService;
 import service.UserService;
 
@@ -38,9 +41,13 @@ public class Main {
     private static final String ROUTES_FILE =
             "src/main/resources/data/routes.txt";
 
+    private static final String TICKETS_FILE =
+            "src/main/resources/data/tickets.txt";
+
     /*
-     * One shared TXTFileManager is used so loaded
-     * object relationships can be reconstructed correctly.
+     * One shared TXTFileManager is required so that
+     * loaded Routes and Tickets reuse the correct
+     * Station and Passenger objects.
      */
     private static final TXTFileManager fileManager =
             new TXTFileManager();
@@ -48,27 +55,31 @@ public class Main {
     private static final HashMap<String, User> users =
             new HashMap<>();
 
+    private static final ArrayList<Ticket> tickets =
+            new ArrayList<>();
+
     private static UserService userService;
     private static StationService stationService;
     private static TrainService trainService;
     private static RouteService routeService;
+    private static TicketService ticketService;
 
     public static void main(String[] args) {
 
         /*
-         * Required startup loading order:
+         * Important relationship/load order:
          *
          * 1. Users
          * 2. Stations
          * 3. Trains
          * 4. Routes
-         *
-         * Tickets will be connected later.
+         * 5. Tickets
          */
         loadUsers();
         loadStations();
         loadTrains();
         loadRoutes();
+        loadTickets();
 
         boolean running = true;
 
@@ -247,9 +258,6 @@ public class Main {
 
     /**
      * Loads routes from TXT storage.
-     *
-     * Routes reuse the Station objects already loaded
-     * by the shared TXTFileManager.
      */
     private static void loadRoutes() {
 
@@ -289,6 +297,58 @@ public class Main {
 
             waitForBack();
         }
+    }
+
+    /**
+     * Loads tickets from TXT storage.
+     *
+     * The shared TXTFileManager ensures each loaded
+     * Ticket uses the existing Passenger and Station
+     * objects that were loaded earlier.
+     */
+    private static void loadTickets() {
+
+        tickets.clear();
+
+        try {
+
+            Object loadedData =
+                    fileManager.loadData(TICKETS_FILE);
+
+            if (loadedData instanceof ArrayList<?> loadedTickets) {
+
+                for (Object item : loadedTickets) {
+
+                    if (item instanceof Ticket ticket) {
+
+                        tickets.add(
+                                ticket
+                        );
+                    }
+                }
+            }
+
+        } catch (FileProcessingException e) {
+
+            clearScreen();
+
+            System.out.println(
+                    "Unable to load ticket data: "
+                            + e.getMessage()
+            );
+
+            System.out.println(
+                    "The system will continue with an empty ticket list."
+            );
+
+            waitForBack();
+        }
+
+        ticketService =
+                new TicketService(
+                        new StandardFareCalculator(),
+                        tickets
+                );
     }
 
     /**
@@ -468,6 +528,12 @@ public class Main {
                     viewRoutes();
                     break;
 
+                case "5":
+                    viewPassengerTickets(
+                            passenger
+                    );
+                    break;
+
                 case "0":
                     loggedIn = false;
                     break;
@@ -481,7 +547,7 @@ public class Main {
     }
 
     /**
-     * Displays the logged-in Passenger menu.
+     * Displays the Passenger menu.
      */
     private static void displayPassengerMenu(
             Passenger passenger) {
@@ -529,6 +595,10 @@ public class Main {
         );
 
         System.out.println(
+                "5. View My Tickets"
+        );
+
+        System.out.println(
                 "0. Logout"
         );
 
@@ -538,7 +608,7 @@ public class Main {
     }
 
     /**
-     * Displays the Passenger's profile.
+     * Displays the Passenger profile.
      */
     private static void viewPassengerProfile(
             Passenger passenger) {
@@ -606,7 +676,7 @@ public class Main {
     }
 
     /**
-     * Displays all available metro stations.
+     * Displays available metro stations.
      */
     private static void viewStations() {
 
@@ -624,7 +694,7 @@ public class Main {
     }
 
     /**
-     * Displays all available metro routes.
+     * Displays available metro routes.
      */
     private static void viewRoutes() {
 
@@ -637,6 +707,53 @@ public class Main {
         System.out.println();
 
         routeService.viewRoutes();
+
+        waitForBack();
+    }
+
+    /**
+     * Displays only tickets belonging to
+     * the currently logged-in Passenger.
+     */
+    private static void viewPassengerTickets(
+            Passenger passenger) {
+
+        clearScreen();
+
+        System.out.println(
+                "========== MY TICKETS =========="
+        );
+
+        System.out.println();
+
+        boolean found = false;
+
+        for (Ticket ticket : tickets) {
+
+            /*
+             * Loaded Tickets reuse the same Passenger
+             * object, so this preserves the object
+             * relationship rather than matching
+             * duplicated passenger information.
+             */
+            if (ticket.getPassenger() == passenger) {
+
+                ticket.printTicket();
+
+                System.out.println(
+                        "-------------------------"
+                );
+
+                found = true;
+            }
+        }
+
+        if (!found) {
+
+            System.out.println(
+                    "No tickets found for this passenger."
+            );
+        }
 
         waitForBack();
     }
@@ -678,7 +795,7 @@ public class Main {
     }
 
     /**
-     * Displays a message and waits for the user to return.
+     * Displays a message and waits for the user.
      */
     private static void showMessage(
             String message) {
@@ -693,7 +810,7 @@ public class Main {
     }
 
     /**
-     * Waits until the user enters X to return.
+     * Waits until X is entered.
      */
     private static void waitForBack() {
 
