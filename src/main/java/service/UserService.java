@@ -19,6 +19,13 @@ public class UserService {
         this.users = new HashMap<>();
     }
 
+    /**
+     * Creates a UserService using users restored from file storage.
+     */
+    public UserService(HashMap<String, User> users) {
+        this.users = users;
+    }
+
     // 3. Register user - validate and add a new user to the collection
     public void registerUser(User user) {
 
