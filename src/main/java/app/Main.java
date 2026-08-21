@@ -4,8 +4,10 @@ import enums.UserRole;
 import exception.FileProcessingException;
 import exception.InvalidLoginException;
 import model.Passenger;
+import model.Station;
 import model.User;
 import repository.TXTFileManager;
+import service.StationService;
 import service.UserService;
 
 import java.util.ArrayList;
@@ -17,20 +19,40 @@ import java.util.Scanner;
  */
 public class Main {
 
-    private static final Scanner scanner = new Scanner(System.in);
+    private static final Scanner scanner =
+            new Scanner(System.in);
 
     private static final String USERS_FILE =
             "src/main/resources/data/users.txt";
+
+    private static final String STATIONS_FILE =
+            "src/main/resources/data/stations.txt";
+
+    /*
+     * Shared TXTFileManager.
+     *
+     * The same instance must later be reused when loading
+     * stations, routes and tickets so object relationships
+     * can be reconstructed correctly.
+     */
+    private static final TXTFileManager fileManager =
+            new TXTFileManager();
 
     // Shared user collection used by UserService and later file saving.
     private static final HashMap<String, User> users =
             new HashMap<>();
 
     private static UserService userService;
+    private static StationService stationService;
 
     public static void main(String[] args) {
 
+        /*
+         * Data must be loaded in the correct order.
+         * More data types will be connected in later checkpoints.
+         */
         loadUsers();
+        loadStations();
 
         boolean running = true;
 
@@ -39,6 +61,7 @@ public class Main {
             displayMainMenu();
 
             System.out.print("Enter choice: ");
+
             String choice =
                     scanner.nextLine().trim();
 
@@ -78,9 +101,6 @@ public class Main {
     private static void loadUsers() {
 
         users.clear();
-
-        TXTFileManager fileManager =
-                new TXTFileManager();
 
         try {
 
@@ -122,6 +142,55 @@ public class Main {
     }
 
     /**
+     * Loads stations from TXT storage.
+     */
+    private static void loadStations() {
+
+        stationService =
+                new StationService();
+
+        try {
+
+            Object loadedData =
+                    fileManager.loadData(STATIONS_FILE);
+
+            if (loadedData instanceof ArrayList<?> loadedStations) {
+
+                for (Object item : loadedStations) {
+
+                    if (item instanceof Station station) {
+
+                        stationService.addStation(
+                                station
+                        );
+                    }
+                }
+            }
+
+            /*
+             * Uses the Comparator sorting feature
+             * implemented previously.
+             */
+            stationService.sortStationsByName();
+
+        } catch (FileProcessingException e) {
+
+            clearScreen();
+
+            System.out.println(
+                    "Unable to load station data: "
+                            + e.getMessage()
+            );
+
+            System.out.println(
+                    "The system will continue with an empty station list."
+            );
+
+            waitForBack();
+        }
+    }
+
+    /**
      * Registers a new Passenger account.
      */
     private static void registerPassenger() {
@@ -133,18 +202,22 @@ public class Main {
         );
 
         System.out.print("Passenger ID: ");
+
         String userId =
                 scanner.nextLine().trim();
 
         System.out.print("Name: ");
+
         String name =
                 scanner.nextLine().trim();
 
         System.out.print("Email: ");
+
         String email =
                 scanner.nextLine().trim();
 
         System.out.print("Password: ");
+
         String password =
                 scanner.nextLine();
 
@@ -154,12 +227,14 @@ public class Main {
                 || password.isBlank()) {
 
             System.out.println();
+
             System.out.println(
                     "Registration failed: "
                             + "All fields are required."
             );
 
             waitForBack();
+
             return;
         }
 
@@ -173,7 +248,9 @@ public class Main {
 
         System.out.println();
 
-        userService.registerUser(passenger);
+        userService.registerUser(
+                passenger
+        );
 
         waitForBack();
     }
@@ -190,10 +267,12 @@ public class Main {
         );
 
         System.out.print("Email: ");
+
         String email =
                 scanner.nextLine().trim();
 
         System.out.print("Password: ");
+
         String password =
                 scanner.nextLine();
 
@@ -224,6 +303,7 @@ public class Main {
                 );
 
                 System.out.println();
+
                 System.out.println(
                         "Admin menu will be connected later."
                 );
@@ -258,7 +338,9 @@ public class Main {
                     passenger
             );
 
-            System.out.print("Enter choice: ");
+            System.out.print(
+                    "Enter choice: "
+            );
 
             String choice =
                     scanner.nextLine().trim();
@@ -275,6 +357,10 @@ public class Main {
                     topUpBalance(
                             passenger
                     );
+                    break;
+
+                case "3":
+                    viewStations();
                     break;
 
                 case "0":
@@ -300,15 +386,18 @@ public class Main {
         System.out.println(
                 "========================================"
         );
+
         System.out.println(
                 "            PASSENGER MENU"
         );
+
         System.out.println(
                 "========================================"
         );
 
         System.out.println(
-                "Welcome, " + passenger.getName()
+                "Welcome, "
+                        + passenger.getName()
         );
 
         System.out.printf(
@@ -317,9 +406,22 @@ public class Main {
         );
 
         System.out.println();
-        System.out.println("1. View Profile");
-        System.out.println("2. Top Up Balance");
-        System.out.println("0. Logout");
+
+        System.out.println(
+                "1. View Profile"
+        );
+
+        System.out.println(
+                "2. Top Up Balance"
+        );
+
+        System.out.println(
+                "3. View Stations"
+        );
+
+        System.out.println(
+                "0. Logout"
+        );
 
         System.out.println(
                 "========================================"
@@ -379,7 +481,9 @@ public class Main {
             double amount =
                     Double.parseDouble(input);
 
-            passenger.topUp(amount);
+            passenger.topUp(
+                    amount
+            );
 
         } catch (NumberFormatException e) {
 
@@ -388,6 +492,24 @@ public class Main {
                             + "Please enter a valid number."
             );
         }
+
+        waitForBack();
+    }
+
+    /**
+     * Displays all available metro stations.
+     */
+    private static void viewStations() {
+
+        clearScreen();
+
+        System.out.println(
+                "========== METRO STATIONS =========="
+        );
+
+        System.out.println();
+
+        stationService.viewStations();
 
         waitForBack();
     }
@@ -402,16 +524,26 @@ public class Main {
         System.out.println(
                 "========================================"
         );
+
         System.out.println(
                 "     SMART METRO TICKETING SYSTEM"
         );
+
         System.out.println(
                 "========================================"
         );
 
-        System.out.println("1. Login");
-        System.out.println("2. Register Passenger");
-        System.out.println("0. Exit");
+        System.out.println(
+                "1. Login"
+        );
+
+        System.out.println(
+                "2. Register Passenger"
+        );
+
+        System.out.println(
+                "0. Exit"
+        );
 
         System.out.println(
                 "========================================"
@@ -426,7 +558,9 @@ public class Main {
 
         clearScreen();
 
-        System.out.println(message);
+        System.out.println(
+                message
+        );
 
         waitForBack();
     }
@@ -439,6 +573,7 @@ public class Main {
         while (true) {
 
             System.out.println();
+
             System.out.print(
                     "Press X to go back: "
             );
