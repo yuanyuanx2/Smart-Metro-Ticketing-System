@@ -1,6 +1,8 @@
 package repository;
 
 import exception.FileProcessingException;
+import model.Admin;
+import model.Passenger;
 import model.Route;
 import model.Station;
 import model.Train;
@@ -19,10 +21,18 @@ import java.util.HashMap;
 public class TXTFileManager implements FileManager {
 
     /**
-     * Stores loaded stations by station ID so that Route objects
-     * can reuse the correct Station objects when loaded.
+     * Stores loaded stations by station ID so Route objects
+     * can reuse the correct Station objects.
      */
-    private final HashMap<String, Station> stationLookup = new HashMap<>();
+    private final HashMap<String, Station> stationLookup =
+            new HashMap<>();
+
+    /**
+     * Stores loaded passengers by user ID so Ticket objects
+     * can reuse the correct Passenger objects later.
+     */
+    private final HashMap<String, Passenger> passengerLookup =
+            new HashMap<>();
 
     @Override
     public void saveData(Object data, String fileName)
@@ -82,6 +92,25 @@ public class TXTFileManager implements FileManager {
     private String convertToText(Object item)
             throws FileProcessingException {
 
+        if (item instanceof Passenger passenger) {
+
+            return "PASSENGER|"
+                    + passenger.getUserId() + "|"
+                    + passenger.getName() + "|"
+                    + passenger.getEmail() + "|"
+                    + passenger.getPassword() + "|"
+                    + passenger.getBalance();
+        }
+
+        if (item instanceof Admin admin) {
+
+            return "ADMIN|"
+                    + admin.getUserId() + "|"
+                    + admin.getName() + "|"
+                    + admin.getEmail() + "|"
+                    + admin.getPassword();
+        }
+
         if (item instanceof Station station) {
 
             return "STATION|"
@@ -122,6 +151,63 @@ public class TXTFileManager implements FileManager {
     private Object convertFromText(String line)
             throws FileProcessingException {
 
+        if (line.startsWith("PASSENGER|")) {
+
+            String[] parts = line.split("\\|", -1);
+
+            if (parts.length != 6) {
+                throw new FileProcessingException(
+                        "Invalid passenger data: " + line
+                );
+            }
+
+            try {
+
+                double balance =
+                        Double.parseDouble(parts[5]);
+
+                Passenger passenger =
+                        new Passenger(
+                                parts[1],
+                                parts[2],
+                                parts[3],
+                                parts[4],
+                                balance
+                        );
+
+                passengerLookup.put(
+                        passenger.getUserId(),
+                        passenger
+                );
+
+                return passenger;
+
+            } catch (NumberFormatException e) {
+
+                throw new FileProcessingException(
+                        "Invalid passenger balance: " + line
+                );
+            }
+        }
+
+        if (line.startsWith("ADMIN|")) {
+
+            String[] parts = line.split("\\|", -1);
+
+            if (parts.length != 5) {
+                throw new FileProcessingException(
+                        "Invalid admin data: " + line
+                );
+            }
+
+            return new Admin(
+                    parts[1],
+                    parts[2],
+                    parts[3],
+                    parts[4]
+            );
+        }
+
         if (line.startsWith("STATION|")) {
 
             String[] parts = line.split("\\|", -1);
@@ -158,7 +244,8 @@ public class TXTFileManager implements FileManager {
 
             try {
 
-                int capacity = Integer.parseInt(parts[3]);
+                int capacity =
+                        Integer.parseInt(parts[3]);
 
                 return new Train(
                         parts[1],
@@ -184,8 +271,11 @@ public class TXTFileManager implements FileManager {
                 );
             }
 
-            Station source = stationLookup.get(parts[2]);
-            Station destination = stationLookup.get(parts[3]);
+            Station source =
+                    stationLookup.get(parts[2]);
+
+            Station destination =
+                    stationLookup.get(parts[3]);
 
             if (source == null || destination == null) {
 
