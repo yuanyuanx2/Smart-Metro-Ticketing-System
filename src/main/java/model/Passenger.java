@@ -4,46 +4,68 @@ import enums.UserRole;
 
 public class Passenger extends User {
 
-    // 1. Attribute - store the passenger's current wallet balance
+    // Store the passenger's current wallet balance
     private double balance;
 
-    // 2. Constructor - initialize passenger information and starting balance
-    public Passenger(String userId, String name, String email, String password) {
+    /**
+     * Creates a new passenger with zero starting balance.
+     */
+    public Passenger(String userId, String name,
+                     String email, String password) {
 
-        // Call the parent User constructor
         super(userId, name, email, password, UserRole.PASSENGER);
-
-        // Every new passenger starts with zero balance
         this.balance = 0.0;
     }
 
-    // 3. Getter method - allow the current balance to be viewed
+    /**
+     * Creates a passenger with an existing balance.
+     * Used when restoring passenger data from a file.
+     */
+    public Passenger(String userId, String name,
+                     String email, String password,
+                     double balance) {
+
+        super(userId, name, email, password, UserRole.PASSENGER);
+        this.balance = balance;
+    }
+
     public double getBalance() {
         return balance;
     }
 
-    // 4. Top-up method - add money into the passenger's wallet
+    /**
+     * Adds money into the passenger's wallet.
+     */
     public void topUp(double amount) {
 
         if (amount > 0) {
             balance += amount;
 
             System.out.println("Top up successful.");
-            System.out.printf("Current balance: RM %.2f%n", balance);
+            System.out.printf(
+                    "Current balance: RM %.2f%n",
+                    balance
+            );
+
         } else {
-            System.out.println("Top up amount must be greater than RM 0.00.");
+
+            System.out.println(
+                    "Top up amount must be greater than RM 0.00."
+            );
         }
     }
 
-    // 5. Buy ticket method - deduct the ticket fare from the passenger's wallet balance
+    /**
+     * Deducts the ticket fare from the passenger's wallet.
+     */
     public void buyTicket(Ticket ticket) {
 
-        // Check whether the passenger has enough balance
         if (balance < ticket.getFare()) {
-            throw new IllegalArgumentException("Insufficient balance.");
+            throw new IllegalArgumentException(
+                    "Insufficient balance."
+            );
         }
 
-        // Deduct the ticket fare from the passenger's wallet
         balance -= ticket.getFare();
     }
 }
