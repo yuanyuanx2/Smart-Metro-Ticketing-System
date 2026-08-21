@@ -1,5 +1,14 @@
 package app;
 
+import enums.UserRole;
+import exception.FileProcessingException;
+import exception.InvalidLoginException;
+import model.User;
+import repository.TXTFileManager;
+import service.UserService;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Scanner;
 
 /**
@@ -9,7 +18,15 @@ public class Main {
 
     private static final Scanner scanner = new Scanner(System.in);
 
+    private static final String USERS_FILE =
+            "src/main/resources/data/users.txt";
+
+    private static UserService userService;
+
     public static void main(String[] args) {
+
+        // Load existing users when the application starts.
+        loadUsers();
 
         boolean running = true;
 
@@ -23,10 +40,7 @@ public class Main {
             switch (choice) {
 
                 case "1":
-                    System.out.println(
-                            "\nLogin feature will be connected in the next checkpoint."
-                    );
-                    pause();
+                    login();
                     break;
 
                 case "2":
@@ -53,6 +67,102 @@ public class Main {
         );
 
         scanner.close();
+    }
+
+    /**
+     * Loads users from TXT storage and creates the UserService.
+     */
+    private static void loadUsers() {
+
+        HashMap<String, User> users = new HashMap<>();
+
+        TXTFileManager fileManager = new TXTFileManager();
+
+        try {
+
+            Object loadedData =
+                    fileManager.loadData(USERS_FILE);
+
+            if (loadedData instanceof ArrayList<?> loadedUsers) {
+
+                for (Object item : loadedUsers) {
+
+                    if (item instanceof User user) {
+                        users.put(
+                                user.getUserId(),
+                                user
+                        );
+                    }
+                }
+            }
+
+            System.out.println(
+                    "User data loaded successfully."
+            );
+
+        } catch (FileProcessingException e) {
+
+            System.out.println(
+                    "Unable to load user data: "
+                            + e.getMessage()
+            );
+
+            System.out.println(
+                    "The system will continue with an empty user list."
+            );
+        }
+
+        userService = new UserService(users);
+    }
+
+    /**
+     * Handles Passenger and Admin login.
+     */
+    private static void login() {
+
+        System.out.println();
+        System.out.println("========== LOGIN ==========");
+
+        System.out.print("Email: ");
+        String email = scanner.nextLine().trim();
+
+        System.out.print("Password: ");
+        String password = scanner.nextLine();
+
+        try {
+
+            User user =
+                    userService.login(email, password);
+
+            System.out.println();
+            System.out.println(
+                    "Login successful. Welcome, "
+                            + user.getName()
+                            + "!"
+            );
+
+            if (user.getRole() == UserRole.PASSENGER) {
+
+                System.out.println(
+                        "Passenger menu will be connected later."
+                );
+
+            } else if (user.getRole() == UserRole.ADMIN) {
+
+                System.out.println(
+                        "Admin menu will be connected later."
+                );
+            }
+
+        } catch (InvalidLoginException e) {
+
+            System.out.println();
+            System.out.println(
+                    "Login failed: " + e.getMessage()
+            );
+        }
+
+        pause();
     }
 
     /**
