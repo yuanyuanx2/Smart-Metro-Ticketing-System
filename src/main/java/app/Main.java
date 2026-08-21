@@ -30,7 +30,6 @@ public class Main {
 
     public static void main(String[] args) {
 
-        // Load existing users when the application starts.
         loadUsers();
 
         boolean running = true;
@@ -40,7 +39,8 @@ public class Main {
             displayMainMenu();
 
             System.out.print("Enter choice: ");
-            String choice = scanner.nextLine().trim();
+            String choice =
+                    scanner.nextLine().trim();
 
             switch (choice) {
 
@@ -57,15 +57,16 @@ public class Main {
                     break;
 
                 default:
-                    System.out.println(
-                            "\nInvalid choice. Please try again."
+                    showMessage(
+                            "Invalid choice. Please try again."
                     );
-                    pause();
             }
         }
 
+        clearScreen();
+
         System.out.println(
-                "\nThank you for using Smart Metro Ticketing System."
+                "Thank you for using Smart Metro Ticketing System."
         );
 
         scanner.close();
@@ -100,11 +101,9 @@ public class Main {
                 }
             }
 
-            System.out.println(
-                    "User data loaded successfully."
-            );
-
         } catch (FileProcessingException e) {
+
+            clearScreen();
 
             System.out.println(
                     "Unable to load user data: "
@@ -114,6 +113,8 @@ public class Main {
             System.out.println(
                     "The system will continue with an empty user list."
             );
+
+            waitForBack();
         }
 
         userService =
@@ -125,7 +126,8 @@ public class Main {
      */
     private static void registerPassenger() {
 
-        System.out.println();
+        clearScreen();
+
         System.out.println(
                 "===== PASSENGER REGISTRATION ====="
         );
@@ -146,18 +148,18 @@ public class Main {
         String password =
                 scanner.nextLine();
 
-        // Prevent empty registration fields.
         if (userId.isBlank()
                 || name.isBlank()
                 || email.isBlank()
                 || password.isBlank()) {
 
+            System.out.println();
             System.out.println(
                     "Registration failed: "
                             + "All fields are required."
             );
 
-            pause();
+            waitForBack();
             return;
         }
 
@@ -169,9 +171,11 @@ public class Main {
                         password
                 );
 
+        System.out.println();
+
         userService.registerUser(passenger);
 
-        pause();
+        waitForBack();
     }
 
     /**
@@ -179,8 +183,11 @@ public class Main {
      */
     private static void login() {
 
-        System.out.println();
-        System.out.println("========== LOGIN ==========");
+        clearScreen();
+
+        System.out.println(
+                "========== LOGIN =========="
+        );
 
         System.out.print("Email: ");
         String email =
@@ -198,38 +205,191 @@ public class Main {
                             password
                     );
 
-            System.out.println();
-            System.out.println(
-                    "Login successful. Welcome, "
-                            + user.getName()
-                            + "!"
-            );
-
             if (user.getRole()
                     == UserRole.PASSENGER) {
 
-                System.out.println(
-                        "Passenger menu will be connected later."
+                passengerMenu(
+                        (Passenger) user
                 );
 
             } else if (user.getRole()
                     == UserRole.ADMIN) {
 
+                clearScreen();
+
+                System.out.println(
+                        "Login successful. Welcome, "
+                                + user.getName()
+                                + "!"
+                );
+
+                System.out.println();
                 System.out.println(
                         "Admin menu will be connected later."
                 );
+
+                waitForBack();
             }
 
         } catch (InvalidLoginException e) {
 
-            System.out.println();
+            clearScreen();
+
             System.out.println(
                     "Login failed: "
                             + e.getMessage()
             );
+
+            waitForBack();
+        }
+    }
+
+    /**
+     * Displays and handles the Passenger menu.
+     */
+    private static void passengerMenu(
+            Passenger passenger) {
+
+        boolean loggedIn = true;
+
+        while (loggedIn) {
+
+            displayPassengerMenu(
+                    passenger
+            );
+
+            System.out.print("Enter choice: ");
+
+            String choice =
+                    scanner.nextLine().trim();
+
+            switch (choice) {
+
+                case "1":
+                    viewPassengerProfile(
+                            passenger
+                    );
+                    break;
+
+                case "2":
+                    topUpBalance(
+                            passenger
+                    );
+                    break;
+
+                case "0":
+                    loggedIn = false;
+                    break;
+
+                default:
+                    showMessage(
+                            "Invalid choice. Please try again."
+                    );
+            }
+        }
+    }
+
+    /**
+     * Displays the logged-in Passenger menu.
+     */
+    private static void displayPassengerMenu(
+            Passenger passenger) {
+
+        clearScreen();
+
+        System.out.println(
+                "========================================"
+        );
+        System.out.println(
+                "            PASSENGER MENU"
+        );
+        System.out.println(
+                "========================================"
+        );
+
+        System.out.println(
+                "Welcome, " + passenger.getName()
+        );
+
+        System.out.printf(
+                "Balance: RM %.2f%n",
+                passenger.getBalance()
+        );
+
+        System.out.println();
+        System.out.println("1. View Profile");
+        System.out.println("2. Top Up Balance");
+        System.out.println("0. Logout");
+
+        System.out.println(
+                "========================================"
+        );
+    }
+
+    /**
+     * Displays the Passenger's profile and wallet balance.
+     */
+    private static void viewPassengerProfile(
+            Passenger passenger) {
+
+        clearScreen();
+
+        System.out.println(
+                "===== PASSENGER PROFILE ====="
+        );
+
+        passenger.viewProfile();
+
+        System.out.printf(
+                "Balance : RM %.2f%n",
+                passenger.getBalance()
+        );
+
+        waitForBack();
+    }
+
+    /**
+     * Handles Passenger wallet top up.
+     */
+    private static void topUpBalance(
+            Passenger passenger) {
+
+        clearScreen();
+
+        System.out.println(
+                "===== TOP UP BALANCE ====="
+        );
+
+        System.out.printf(
+                "Current balance: RM %.2f%n",
+                passenger.getBalance()
+        );
+
+        System.out.print(
+                "Enter top up amount: RM "
+        );
+
+        String input =
+                scanner.nextLine().trim();
+
+        System.out.println();
+
+        try {
+
+            double amount =
+                    Double.parseDouble(input);
+
+            passenger.topUp(amount);
+
+        } catch (NumberFormatException e) {
+
+            System.out.println(
+                    "Invalid amount. "
+                            + "Please enter a valid number."
+            );
         }
 
-        pause();
+        waitForBack();
     }
 
     /**
@@ -237,7 +397,8 @@ public class Main {
      */
     private static void displayMainMenu() {
 
-        System.out.println();
+        clearScreen();
+
         System.out.println(
                 "========================================"
         );
@@ -247,24 +408,64 @@ public class Main {
         System.out.println(
                 "========================================"
         );
+
         System.out.println("1. Login");
         System.out.println("2. Register Passenger");
         System.out.println("0. Exit");
+
         System.out.println(
                 "========================================"
         );
     }
 
     /**
-     * Waits for the user before returning to the menu.
+     * Displays a message and waits for the user to go back.
      */
-    private static void pause() {
+    private static void showMessage(
+            String message) {
 
-        System.out.println();
+        clearScreen();
+
+        System.out.println(message);
+
+        waitForBack();
+    }
+
+    /**
+     * Waits until the user enters X to return.
+     */
+    private static void waitForBack() {
+
+        while (true) {
+
+            System.out.println();
+            System.out.print(
+                    "Press X to go back: "
+            );
+
+            String choice =
+                    scanner.nextLine().trim();
+
+            if (choice.equalsIgnoreCase("X")) {
+                return;
+            }
+
+            System.out.println(
+                    "Invalid choice. Press X to go back."
+            );
+        }
+    }
+
+    /**
+     * Clears the visible console and moves the cursor
+     * back to the top-left corner.
+     */
+    private static void clearScreen() {
+
         System.out.print(
-                "Press Enter to continue..."
+                "\033[H\033[2J"
         );
 
-        scanner.nextLine();
+        System.out.flush();
     }
 }
