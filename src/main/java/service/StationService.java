@@ -3,6 +3,7 @@ package service;
 import model.Station;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 
 /**
  * Handles station management operations.
@@ -39,6 +40,20 @@ public class StationService {
         }
 
         return null;
+    }
+
+    /**
+     * Sorts stations alphabetically by station name.
+     */
+    public void sortStationsByName() {
+
+        Comparator<Station> nameComparator =
+                Comparator.comparing(
+                        Station::getName,
+                        String.CASE_INSENSITIVE_ORDER
+                );
+
+        stations.sort(nameComparator);
     }
 
     /**
