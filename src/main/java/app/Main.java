@@ -659,7 +659,7 @@ public class Main {
     }
 
     /**
-     * Admin menu foundation.
+     * Admin menu.
      */
     private static void adminMenu(
             Admin admin) {
@@ -689,8 +689,8 @@ public class Main {
                     break;
 
                 case "2":
-                    showMessage(
-                            "Station management will be connected next."
+                    manageStations(
+                            admin
                     );
                     break;
 
@@ -805,6 +805,317 @@ public class Main {
         System.out.println();
 
         admin.viewProfile();
+
+        waitForBack();
+    }
+
+    /**
+     * Admin Station Management menu.
+     */
+    private static void manageStations(
+            Admin admin) {
+
+        boolean managingStations =
+                true;
+
+        while (managingStations) {
+
+            clearScreen();
+
+            System.out.println(
+                    "========================================"
+            );
+
+            System.out.println(
+                    "          STATION MANAGEMENT"
+            );
+
+            System.out.println(
+                    "========================================"
+            );
+
+            System.out.println(
+                    "1. Add Station"
+            );
+
+            System.out.println(
+                    "2. View Stations"
+            );
+
+            System.out.println(
+                    "3. Search Station"
+            );
+
+            System.out.println();
+
+            System.out.println(
+                    "[X] Back"
+            );
+
+            System.out.println(
+                    "========================================"
+            );
+
+            System.out.print(
+                    "Enter choice: "
+            );
+
+            String choice =
+                    scanner.nextLine().trim();
+
+            switch (choice) {
+
+                case "1":
+                    addStationByAdmin(
+                            admin
+                    );
+                    break;
+
+                case "2":
+                    viewStations();
+                    break;
+
+                case "3":
+                    searchStationByAdmin();
+                    break;
+
+                case "X":
+                case "x":
+                    managingStations = false;
+                    break;
+
+                default:
+                    showMessage(
+                            "Invalid choice. Please try again."
+                    );
+            }
+        }
+    }
+
+    /**
+     * Allows Admin to add a Station.
+     *
+     * Admin.addStation() is used to preserve
+     * the lecturer-required class relationship.
+     */
+    private static void addStationByAdmin(
+            Admin admin) {
+
+        clearScreen();
+
+        System.out.println(
+                "========== ADD STATION =========="
+        );
+
+        System.out.println();
+
+        System.out.println(
+                "[X] Back"
+        );
+
+        System.out.println();
+
+        System.out.print(
+                "Station ID: "
+        );
+
+        String stationId =
+                scanner.nextLine().trim();
+
+        if (stationId.equalsIgnoreCase("X")) {
+            return;
+        }
+
+        System.out.print(
+                "Station Name: "
+        );
+
+        String name =
+                scanner.nextLine().trim();
+
+        System.out.print(
+                "Location: "
+        );
+
+        String location =
+                scanner.nextLine().trim();
+
+        /*
+         * All fields are required.
+         */
+        if (stationId.isBlank()
+                || name.isBlank()
+                || location.isBlank()) {
+
+            showMessage(
+                    "Station creation failed: All fields are required."
+            );
+
+            return;
+        }
+
+        /*
+         * Pipe character is reserved by TXT persistence.
+         */
+        if (stationId.contains("|")
+                || name.contains("|")
+                || location.contains("|")) {
+
+            showMessage(
+                    "Station creation failed: Character | is not allowed."
+            );
+
+            return;
+        }
+
+        /*
+         * Prevent duplicate station names.
+         *
+         * StationService.searchStation()
+         * already performs case-insensitive searching.
+         */
+        Station existingStation =
+                stationService.searchStation(
+                        name
+                );
+
+        if (existingStation != null) {
+
+            clearScreen();
+
+            System.out.println(
+                    "Station creation failed."
+            );
+
+            System.out.println();
+
+            System.out.println(
+                    "A station with this name already exists:"
+            );
+
+            System.out.println();
+
+            existingStation.displayInfo();
+
+            waitForBack();
+
+            return;
+        }
+
+        Station station =
+                new Station(
+                        stationId,
+                        name,
+                        location
+                );
+
+        try {
+
+            /*
+             * Use the lecturer-required Admin method.
+             */
+            admin.addStation(
+                    station
+            );
+
+            /*
+             * Re-sort Stations alphabetically
+             * after adding a new Station.
+             */
+            stationService.sortStationsByName();
+
+            clearScreen();
+
+            System.out.println(
+                    "========== STATION ADDED =========="
+            );
+
+            System.out.println();
+
+            System.out.println(
+                    "Station added successfully."
+            );
+
+            System.out.println();
+
+            station.displayInfo();
+
+        } catch (IllegalStateException e) {
+
+            clearScreen();
+
+            System.out.println(
+                    "Unable to add station: "
+                            + e.getMessage()
+            );
+        }
+
+        waitForBack();
+    }
+
+    /**
+     * Allows Admin to search for a Station
+     * by Station name.
+     */
+    private static void searchStationByAdmin() {
+
+        clearScreen();
+
+        System.out.println(
+                "========== SEARCH STATION =========="
+        );
+
+        System.out.println();
+
+        System.out.println(
+                "[X] Back"
+        );
+
+        System.out.println();
+
+        System.out.print(
+                "Enter station name: "
+        );
+
+        String name =
+                scanner.nextLine().trim();
+
+        if (name.equalsIgnoreCase("X")) {
+            return;
+        }
+
+        if (name.isBlank()) {
+
+            showMessage(
+                    "Station name cannot be blank."
+            );
+
+            return;
+        }
+
+        Station station =
+                stationService.searchStation(
+                        name
+                );
+
+        clearScreen();
+
+        if (station == null) {
+
+            System.out.println(
+                    "Station not found."
+            );
+
+        } else {
+
+            System.out.println(
+                    "========== STATION FOUND =========="
+            );
+
+            System.out.println();
+
+            station.displayInfo();
+        }
 
         waitForBack();
     }
