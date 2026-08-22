@@ -27,6 +27,8 @@ import service.TicketService;
 import service.TrainService;
 import service.UserService;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Scanner;
@@ -53,6 +55,11 @@ public class Main {
 
     private static final String TICKETS_FILE =
             "src/main/resources/data/tickets.txt";
+
+    private static final DateTimeFormatter REPORT_FILE_FORMAT =
+            DateTimeFormatter.ofPattern(
+                    "yyyyMMdd_HHmmss"
+            );
 
     /*
      * One shared TXTFileManager preserves
@@ -109,28 +116,31 @@ public class Main {
         loadRoutes();
         loadTickets();
 
-        /*
-         * Reports share the live Ticket collection.
-         */
         reportService =
-                new ReportService(tickets);
+                new ReportService(
+                        tickets
+                );
 
         /*
-         * Connect loaded Admin accounts to
-         * the live system services.
+         * Reconnect persisted Admin accounts
+         * to the live system services.
          */
         connectAdminServices();
 
-        boolean running = true;
+        boolean running =
+                true;
 
         while (running) {
 
             displayMainMenu();
 
-            System.out.print("Enter choice: ");
+            System.out.print(
+                    "Enter choice: "
+            );
 
             String choice =
-                    scanner.nextLine().trim();
+                    scanner.nextLine()
+                            .trim();
 
             switch (choice) {
 
@@ -143,7 +153,8 @@ public class Main {
                     break;
 
                 case "0":
-                    running = false;
+                    running =
+                            false;
                     break;
 
                 default:
@@ -172,7 +183,7 @@ public class Main {
 
     /**
      * Saves all important live system data
-     * before the application exits.
+     * before application exit.
      */
     private static void saveImportantData() {
 
@@ -232,9 +243,7 @@ public class Main {
     }
 
     /**
-     * Attempts to save one group of data
-     * without preventing the remaining data
-     * groups from being saved.
+     * Attempts to save one data group.
      */
     private static boolean saveDataSafely(
             Object data,
@@ -277,11 +286,14 @@ public class Main {
                             USERS_FILE
                     );
 
-            if (loadedData instanceof ArrayList<?> loadedUsers) {
+            if (loadedData
+                    instanceof ArrayList<?> loadedUsers) {
 
-                for (Object item : loadedUsers) {
+                for (Object item :
+                        loadedUsers) {
 
-                    if (item instanceof User user) {
+                    if (item
+                            instanceof User user) {
 
                         users.put(
                                 user.getUserId(),
@@ -308,7 +320,9 @@ public class Main {
         }
 
         userService =
-                new UserService(users);
+                new UserService(
+                        users
+                );
     }
 
     /**
@@ -326,11 +340,14 @@ public class Main {
                             STATIONS_FILE
                     );
 
-            if (loadedData instanceof ArrayList<?> loadedStations) {
+            if (loadedData
+                    instanceof ArrayList<?> loadedStations) {
 
-                for (Object item : loadedStations) {
+                for (Object item :
+                        loadedStations) {
 
-                    if (item instanceof Station station) {
+                    if (item
+                            instanceof Station station) {
 
                         stationService.addStation(
                                 station
@@ -373,11 +390,14 @@ public class Main {
                             TRAINS_FILE
                     );
 
-            if (loadedData instanceof ArrayList<?> loadedTrains) {
+            if (loadedData
+                    instanceof ArrayList<?> loadedTrains) {
 
-                for (Object item : loadedTrains) {
+                for (Object item :
+                        loadedTrains) {
 
-                    if (item instanceof Train train) {
+                    if (item
+                            instanceof Train train) {
 
                         trainService.addTrain(
                                 train
@@ -405,16 +425,15 @@ public class Main {
 
     /**
      * Loads Routes from TXT storage.
-     *
-     * Main and RouteService use the same
-     * live ArrayList<Route>.
      */
     private static void loadRoutes() {
 
         routes.clear();
 
         routeService =
-                new RouteService(routes);
+                new RouteService(
+                        routes
+                );
 
         try {
 
@@ -423,11 +442,14 @@ public class Main {
                             ROUTES_FILE
                     );
 
-            if (loadedData instanceof ArrayList<?> loadedRoutes) {
+            if (loadedData
+                    instanceof ArrayList<?> loadedRoutes) {
 
-                for (Object item : loadedRoutes) {
+                for (Object item :
+                        loadedRoutes) {
 
-                    if (item instanceof Route route) {
+                    if (item
+                            instanceof Route route) {
 
                         routeService.addRoute(
                                 route
@@ -467,11 +489,14 @@ public class Main {
                             TICKETS_FILE
                     );
 
-            if (loadedData instanceof ArrayList<?> loadedTickets) {
+            if (loadedData
+                    instanceof ArrayList<?> loadedTickets) {
 
-                for (Object item : loadedTickets) {
+                for (Object item :
+                        loadedTickets) {
 
-                    if (item instanceof Ticket ticket) {
+                    if (item
+                            instanceof Ticket ticket) {
 
                         tickets.add(
                                 ticket
@@ -505,7 +530,7 @@ public class Main {
 
     /**
      * Reconnects persisted Admin accounts
-     * to the shared system services.
+     * to live system services.
      */
     private static void connectAdminServices() {
 
@@ -514,9 +539,11 @@ public class Main {
                         users.values()
                 );
 
-        for (User user : currentUsers) {
+        for (User user :
+                currentUsers) {
 
-            if (user.getRole() == UserRole.ADMIN) {
+            if (user.getRole()
+                    == UserRole.ADMIN) {
 
                 Admin connectedAdmin =
                         new Admin(
@@ -537,12 +564,13 @@ public class Main {
         }
 
         userService =
-                new UserService(users);
+                new UserService(
+                        users
+                );
     }
 
     /**
-     * Public registration creates
-     * Passenger accounts only.
+     * Public Passenger registration.
      */
     private static void registerPassenger() {
 
@@ -557,21 +585,24 @@ public class Main {
         );
 
         String userId =
-                scanner.nextLine().trim();
+                scanner.nextLine()
+                        .trim();
 
         System.out.print(
                 "Name: "
         );
 
         String name =
-                scanner.nextLine().trim();
+                scanner.nextLine()
+                        .trim();
 
         System.out.print(
                 "Email: "
         );
 
         String email =
-                scanner.nextLine().trim();
+                scanner.nextLine()
+                        .trim();
 
         System.out.print(
                 "Password: "
@@ -614,7 +645,7 @@ public class Main {
     }
 
     /**
-     * Handles Passenger and Admin login.
+     * Handles Passenger/Admin login.
      */
     private static void login() {
 
@@ -629,7 +660,8 @@ public class Main {
         );
 
         String email =
-                scanner.nextLine().trim();
+                scanner.nextLine()
+                        .trim();
 
         System.out.print(
                 "Password: "
@@ -680,7 +712,8 @@ public class Main {
     private static void passengerMenu(
             Passenger passenger) {
 
-        boolean loggedIn = true;
+        boolean loggedIn =
+                true;
 
         while (loggedIn) {
 
@@ -693,7 +726,8 @@ public class Main {
             );
 
             String choice =
-                    scanner.nextLine().trim();
+                    scanner.nextLine()
+                            .trim();
 
             switch (choice) {
 
@@ -736,7 +770,8 @@ public class Main {
                     break;
 
                 case "0":
-                    loggedIn = false;
+                    loggedIn =
+                            false;
                     break;
 
                 default:
@@ -753,7 +788,8 @@ public class Main {
     private static void adminMenu(
             Admin admin) {
 
-        boolean loggedIn = true;
+        boolean loggedIn =
+                true;
 
         while (loggedIn) {
 
@@ -766,7 +802,8 @@ public class Main {
             );
 
             String choice =
-                    scanner.nextLine().trim();
+                    scanner.nextLine()
+                            .trim();
 
             switch (choice) {
 
@@ -797,13 +834,14 @@ public class Main {
                     break;
 
                 case "6":
-                    viewReportsByAdmin(
+                    manageReports(
                             admin
                     );
                     break;
 
                 case "0":
-                    loggedIn = false;
+                    loggedIn =
+                            false;
                     break;
 
                 default:
@@ -811,6 +849,831 @@ public class Main {
                             "Invalid choice. Please try again."
                     );
             }
+        }
+    }
+
+    /**
+     * Admin reporting menu.
+     */
+    private static void manageReports(
+            Admin admin) {
+
+        boolean viewingReports =
+                true;
+
+        while (viewingReports) {
+
+            clearScreen();
+
+            System.out.println(
+                    "========================================"
+            );
+
+            System.out.println(
+                    "              REPORTS"
+            );
+
+            System.out.println(
+                    "========================================"
+            );
+
+            System.out.println(
+                    "1. Summary Report"
+            );
+
+            System.out.println(
+                    "2. Ticket Type Statistics"
+            );
+
+            System.out.println(
+                    "3. Route Popularity"
+            );
+
+            System.out.println(
+                    "4. Fare Statistics"
+            );
+
+            System.out.println(
+                    "5. Monthly Report"
+            );
+
+            System.out.println(
+                    "6. Quarterly Report"
+            );
+
+            System.out.println(
+                    "7. Yearly Report"
+            );
+
+            System.out.println(
+                    "8. Export Reports"
+            );
+
+            System.out.println();
+
+            System.out.println(
+                    "[X] Back"
+            );
+
+            System.out.println(
+                    "========================================"
+            );
+
+            System.out.print(
+                    "Enter choice: "
+            );
+
+            String choice =
+                    scanner.nextLine()
+                            .trim();
+
+            switch (choice) {
+
+                case "1":
+                    viewReportsByAdmin(
+                            admin
+                    );
+                    break;
+
+                case "2":
+                    viewTicketTypeStatistics();
+                    break;
+
+                case "3":
+                    viewRoutePopularity();
+                    break;
+
+                case "4":
+                    viewFareStatistics();
+                    break;
+
+                case "5":
+                    viewMonthlyReport();
+                    break;
+
+                case "6":
+                    viewQuarterlyReport();
+                    break;
+
+                case "7":
+                    viewYearlyReport();
+                    break;
+
+                case "8":
+                    manageReportExports();
+                    break;
+
+                case "X":
+                case "x":
+                    viewingReports =
+                            false;
+                    break;
+
+                default:
+                    showMessage(
+                            "Invalid choice. Please try again."
+                    );
+            }
+        }
+    }
+
+    /**
+     * Report export menu.
+     */
+    private static void manageReportExports() {
+
+        boolean exporting =
+                true;
+
+        while (exporting) {
+
+            clearScreen();
+
+            System.out.println(
+                    "========================================"
+            );
+
+            System.out.println(
+                    "           EXPORT REPORTS"
+            );
+
+            System.out.println(
+                    "========================================"
+            );
+
+            System.out.println(
+                    "1. Export All-Time Report"
+            );
+
+            System.out.println(
+                    "2. Export Monthly Report"
+            );
+
+            System.out.println(
+                    "3. Export Quarterly Report"
+            );
+
+            System.out.println(
+                    "4. Export Yearly Report"
+            );
+
+            System.out.println();
+
+            System.out.println(
+                    "[X] Back"
+            );
+
+            System.out.println(
+                    "========================================"
+            );
+
+            System.out.print(
+                    "Enter choice: "
+            );
+
+            String choice =
+                    scanner.nextLine()
+                            .trim();
+
+            switch (choice) {
+
+                case "1":
+                    exportAllTimeReportToTxt();
+                    break;
+
+                case "2":
+                    exportMonthlyReportToTxt();
+                    break;
+
+                case "3":
+                    exportQuarterlyReportToTxt();
+                    break;
+
+                case "4":
+                    exportYearlyReportToTxt();
+                    break;
+
+                case "X":
+                case "x":
+                    exporting =
+                            false;
+                    break;
+
+                default:
+                    showMessage(
+                            "Invalid choice. Please try again."
+                    );
+            }
+        }
+    }
+
+    /**
+     * Lecturer-required summary report.
+     */
+    private static void viewReportsByAdmin(
+            Admin admin) {
+
+        clearScreen();
+
+        System.out.println(
+                "========== SUMMARY REPORT =========="
+        );
+
+        System.out.println();
+
+        try {
+
+            admin.viewReports();
+
+        } catch (IllegalStateException e) {
+
+            System.out.println(
+                    "Unable to display reports: "
+                            + e.getMessage()
+            );
+        }
+
+        waitForBack();
+    }
+
+    /**
+     * Ticket-type statistics.
+     */
+    private static void viewTicketTypeStatistics() {
+
+        clearScreen();
+
+        reportService.showTicketTypeStatistics();
+
+        waitForBack();
+    }
+
+    /**
+     * Route popularity.
+     */
+    private static void viewRoutePopularity() {
+
+        clearScreen();
+
+        reportService.showRoutePopularity();
+
+        waitForBack();
+    }
+
+    /**
+     * Fare statistics.
+     */
+    private static void viewFareStatistics() {
+
+        clearScreen();
+
+        reportService.showFareStatistics();
+
+        waitForBack();
+    }
+
+    /**
+     * Monthly management report.
+     */
+    private static void viewMonthlyReport() {
+
+        clearScreen();
+
+        System.out.println(
+                "========== MONTHLY REPORT =========="
+        );
+
+        System.out.println();
+
+        System.out.println(
+                "[X] Back"
+        );
+
+        System.out.println();
+
+        Integer year =
+                readYear(
+                        "Enter year: "
+                );
+
+        if (year == null) {
+            return;
+        }
+
+        Integer month =
+                readMonth(
+                        "Enter month (1-12): "
+                );
+
+        if (month == null) {
+            return;
+        }
+
+        clearScreen();
+
+        reportService.generateMonthlyReport(
+                year,
+                month
+        );
+
+        waitForBack();
+    }
+
+    /**
+     * Quarterly management report.
+     */
+    private static void viewQuarterlyReport() {
+
+        clearScreen();
+
+        System.out.println(
+                "========== QUARTERLY REPORT =========="
+        );
+
+        System.out.println();
+
+        System.out.println(
+                "Q1 = January - March"
+        );
+
+        System.out.println(
+                "Q2 = April - June"
+        );
+
+        System.out.println(
+                "Q3 = July - September"
+        );
+
+        System.out.println(
+                "Q4 = October - December"
+        );
+
+        System.out.println();
+
+        System.out.println(
+                "[X] Back"
+        );
+
+        System.out.println();
+
+        Integer year =
+                readYear(
+                        "Enter year: "
+                );
+
+        if (year == null) {
+            return;
+        }
+
+        Integer quarter =
+                readQuarter(
+                        "Enter quarter (1-4): "
+                );
+
+        if (quarter == null) {
+            return;
+        }
+
+        clearScreen();
+
+        reportService.generateQuarterlyReport(
+                year,
+                quarter
+        );
+
+        waitForBack();
+    }
+
+    /**
+     * Yearly management report.
+     */
+    private static void viewYearlyReport() {
+
+        clearScreen();
+
+        System.out.println(
+                "========== YEARLY REPORT =========="
+        );
+
+        System.out.println();
+
+        System.out.println(
+                "[X] Back"
+        );
+
+        System.out.println();
+
+        Integer year =
+                readYear(
+                        "Enter year: "
+                );
+
+        if (year == null) {
+            return;
+        }
+
+        clearScreen();
+
+        reportService.generateYearlyReport(
+                year
+        );
+
+        waitForBack();
+    }
+
+    /**
+     * Exports all-time report to TXT.
+     */
+    private static void exportAllTimeReportToTxt() {
+
+        ArrayList<String> report =
+                reportService.buildExportReport();
+
+        String fileName =
+                "system_report_all_time_"
+                        + createReportTimestamp()
+                        + ".txt";
+
+        exportReportToTxt(
+                report,
+                fileName
+        );
+    }
+
+    /**
+     * Exports monthly report to TXT.
+     */
+    private static void exportMonthlyReportToTxt() {
+
+        clearScreen();
+
+        System.out.println(
+                "========== EXPORT MONTHLY REPORT =========="
+        );
+
+        System.out.println();
+
+        System.out.println(
+                "[X] Back"
+        );
+
+        System.out.println();
+
+        Integer year =
+                readYear(
+                        "Enter year: "
+                );
+
+        if (year == null) {
+            return;
+        }
+
+        Integer month =
+                readMonth(
+                        "Enter month (1-12): "
+                );
+
+        if (month == null) {
+            return;
+        }
+
+        ArrayList<String> report =
+                reportService.buildMonthlyExportReport(
+                        year,
+                        month
+                );
+
+        String fileName =
+                String.format(
+                        "system_report_monthly_%04d_%02d_%s.txt",
+                        year,
+                        month,
+                        createReportTimestamp()
+                );
+
+        exportReportToTxt(
+                report,
+                fileName
+        );
+    }
+
+    /**
+     * Exports quarterly report to TXT.
+     */
+    private static void exportQuarterlyReportToTxt() {
+
+        clearScreen();
+
+        System.out.println(
+                "========== EXPORT QUARTERLY REPORT =========="
+        );
+
+        System.out.println();
+
+        System.out.println(
+                "Q1 = January - March"
+        );
+
+        System.out.println(
+                "Q2 = April - June"
+        );
+
+        System.out.println(
+                "Q3 = July - September"
+        );
+
+        System.out.println(
+                "Q4 = October - December"
+        );
+
+        System.out.println();
+
+        System.out.println(
+                "[X] Back"
+        );
+
+        System.out.println();
+
+        Integer year =
+                readYear(
+                        "Enter year: "
+                );
+
+        if (year == null) {
+            return;
+        }
+
+        Integer quarter =
+                readQuarter(
+                        "Enter quarter (1-4): "
+                );
+
+        if (quarter == null) {
+            return;
+        }
+
+        ArrayList<String> report =
+                reportService.buildQuarterlyExportReport(
+                        year,
+                        quarter
+                );
+
+        String fileName =
+                String.format(
+                        "system_report_quarterly_%04d_Q%d_%s.txt",
+                        year,
+                        quarter,
+                        createReportTimestamp()
+                );
+
+        exportReportToTxt(
+                report,
+                fileName
+        );
+    }
+
+    /**
+     * Exports yearly report to TXT.
+     */
+    private static void exportYearlyReportToTxt() {
+
+        clearScreen();
+
+        System.out.println(
+                "========== EXPORT YEARLY REPORT =========="
+        );
+
+        System.out.println();
+
+        System.out.println(
+                "[X] Back"
+        );
+
+        System.out.println();
+
+        Integer year =
+                readYear(
+                        "Enter year: "
+                );
+
+        if (year == null) {
+            return;
+        }
+
+        ArrayList<String> report =
+                reportService.buildYearlyExportReport(
+                        year
+                );
+
+        String fileName =
+                String.format(
+                        "system_report_yearly_%04d_%s.txt",
+                        year,
+                        createReportTimestamp()
+                );
+
+        exportReportToTxt(
+                report,
+                fileName
+        );
+    }
+
+    /**
+     * Writes a report using the lecturer-compatible
+     * TXT file manager.
+     */
+    private static void exportReportToTxt(
+            ArrayList<String> report,
+            String fileName) {
+
+        clearScreen();
+
+        String reportFile =
+                "src/main/resources/data/"
+                        + fileName;
+
+        boolean saved =
+                saveDataSafely(
+                        report,
+                        reportFile,
+                        "report"
+                );
+
+        if (saved) {
+
+            System.out.println(
+                    "Report exported successfully."
+            );
+
+            System.out.println();
+
+            System.out.println(
+                    "File:"
+            );
+
+            System.out.println(
+                    reportFile
+            );
+        }
+
+        waitForBack();
+    }
+
+    /**
+     * Creates unique report timestamp.
+     */
+    private static String createReportTimestamp() {
+
+        return LocalDateTime.now()
+                .format(
+                        REPORT_FILE_FORMAT
+                );
+    }
+
+    /**
+     * Reads and validates a year.
+     *
+     * X returns to the previous menu.
+     */
+    private static Integer readYear(
+            String prompt) {
+
+        System.out.print(
+                prompt
+        );
+
+        String input =
+                scanner.nextLine()
+                        .trim();
+
+        if (input.equalsIgnoreCase("X")) {
+            return null;
+        }
+
+        try {
+
+            int year =
+                    Integer.parseInt(
+                            input
+                    );
+
+            if (year < 1
+                    || year > 9999) {
+
+                showMessage(
+                        "Invalid year."
+                );
+
+                return null;
+            }
+
+            return year;
+
+        } catch (NumberFormatException e) {
+
+            showMessage(
+                    "Invalid year. Please enter a whole number."
+            );
+
+            return null;
+        }
+    }
+
+    /**
+     * Reads and validates a month.
+     *
+     * X returns to the previous menu.
+     */
+    private static Integer readMonth(
+            String prompt) {
+
+        System.out.print(
+                prompt
+        );
+
+        String input =
+                scanner.nextLine()
+                        .trim();
+
+        if (input.equalsIgnoreCase("X")) {
+            return null;
+        }
+
+        try {
+
+            int month =
+                    Integer.parseInt(
+                            input
+                    );
+
+            if (month < 1
+                    || month > 12) {
+
+                showMessage(
+                        "Invalid month. Please enter a value from 1 to 12."
+                );
+
+                return null;
+            }
+
+            return month;
+
+        } catch (NumberFormatException e) {
+
+            showMessage(
+                    "Invalid month. Please enter a whole number."
+            );
+
+            return null;
+        }
+    }
+
+    /**
+     * Reads and validates a calendar quarter.
+     *
+     * X returns to the previous menu.
+     */
+    private static Integer readQuarter(
+            String prompt) {
+
+        System.out.print(
+                prompt
+        );
+
+        String input =
+                scanner.nextLine()
+                        .trim();
+
+        if (input.equalsIgnoreCase("X")) {
+            return null;
+        }
+
+        try {
+
+            int quarter =
+                    Integer.parseInt(
+                            input
+                    );
+
+            if (quarter < 1
+                    || quarter > 4) {
+
+                showMessage(
+                        "Invalid quarter. Please enter a value from 1 to 4."
+                );
+
+                return null;
+            }
+
+            return quarter;
+
+        } catch (NumberFormatException e) {
+
+            showMessage(
+                    "Invalid quarter. Please enter a whole number."
+            );
+
+            return null;
         }
     }
 
@@ -894,45 +1757,13 @@ public class Main {
     }
 
     /**
-     * Displays the lecturer-required Admin reports.
-     *
-     * Main calls Admin.viewReports() so the program
-     * demonstrates the class relationship shown in
-     * the lecturer's Class Diagram.
-     */
-    private static void viewReportsByAdmin(
-            Admin admin) {
-
-        clearScreen();
-
-        System.out.println(
-                "========== ADMIN REPORTS =========="
-        );
-
-        System.out.println();
-
-        try {
-
-            admin.viewReports();
-
-        } catch (IllegalStateException e) {
-
-            System.out.println(
-                    "Unable to display reports: "
-                            + e.getMessage()
-            );
-        }
-
-        waitForBack();
-    }
-
-    /**
      * Admin Station Management menu.
      */
     private static void manageStations(
             Admin admin) {
 
-        boolean managingStations = true;
+        boolean managingStations =
+                true;
 
         while (managingStations) {
 
@@ -977,7 +1808,8 @@ public class Main {
             );
 
             String choice =
-                    scanner.nextLine().trim();
+                    scanner.nextLine()
+                            .trim();
 
             switch (choice) {
 
@@ -997,7 +1829,8 @@ public class Main {
 
                 case "X":
                 case "x":
-                    managingStations = false;
+                    managingStations =
+                            false;
                     break;
 
                 default:
@@ -1033,7 +1866,8 @@ public class Main {
         );
 
         String stationId =
-                scanner.nextLine().trim();
+                scanner.nextLine()
+                        .trim();
 
         if (stationId.equalsIgnoreCase("X")) {
             return;
@@ -1044,14 +1878,16 @@ public class Main {
         );
 
         String name =
-                scanner.nextLine().trim();
+                scanner.nextLine()
+                        .trim();
 
         System.out.print(
                 "Location: "
         );
 
         String location =
-                scanner.nextLine().trim();
+                scanner.nextLine()
+                        .trim();
 
         if (stationId.isBlank()
                 || name.isBlank()
@@ -1149,7 +1985,7 @@ public class Main {
     }
 
     /**
-     * Allows Admin to search Stations.
+     * Admin Station search.
      */
     private static void searchStationByAdmin() {
 
@@ -1172,7 +2008,8 @@ public class Main {
         );
 
         String name =
-                scanner.nextLine().trim();
+                scanner.nextLine()
+                        .trim();
 
         if (name.equalsIgnoreCase("X")) {
             return;
@@ -1220,7 +2057,8 @@ public class Main {
     private static void manageTrains(
             Admin admin) {
 
-        boolean managingTrains = true;
+        boolean managingTrains =
+                true;
 
         while (managingTrains) {
 
@@ -1261,7 +2099,8 @@ public class Main {
             );
 
             String choice =
-                    scanner.nextLine().trim();
+                    scanner.nextLine()
+                            .trim();
 
             switch (choice) {
 
@@ -1277,7 +2116,8 @@ public class Main {
 
                 case "X":
                 case "x":
-                    managingTrains = false;
+                    managingTrains =
+                            false;
                     break;
 
                 default:
@@ -1313,7 +2153,8 @@ public class Main {
         );
 
         String trainId =
-                scanner.nextLine().trim();
+                scanner.nextLine()
+                        .trim();
 
         if (trainId.equalsIgnoreCase("X")) {
             return;
@@ -1324,14 +2165,16 @@ public class Main {
         );
 
         String trainName =
-                scanner.nextLine().trim();
+                scanner.nextLine()
+                        .trim();
 
         System.out.print(
                 "Capacity: "
         );
 
         String capacityInput =
-                scanner.nextLine().trim();
+                scanner.nextLine()
+                        .trim();
 
         if (trainId.isBlank()
                 || trainName.isBlank()
@@ -1426,7 +2269,7 @@ public class Main {
     }
 
     /**
-     * Displays all Trains.
+     * Displays Trains.
      */
     private static void viewTrainsByAdmin() {
 
@@ -1448,7 +2291,8 @@ public class Main {
      */
     private static void manageRoutes() {
 
-        boolean managingRoutes = true;
+        boolean managingRoutes =
+                true;
 
         while (managingRoutes) {
 
@@ -1493,7 +2337,8 @@ public class Main {
             );
 
             String choice =
-                    scanner.nextLine().trim();
+                    scanner.nextLine()
+                            .trim();
 
             switch (choice) {
 
@@ -1511,7 +2356,8 @@ public class Main {
 
                 case "X":
                 case "x":
-                    managingRoutes = false;
+                    managingRoutes =
+                            false;
                     break;
 
                 default:
@@ -1523,7 +2369,7 @@ public class Main {
     }
 
     /**
-     * Creates a Route using existing Station objects.
+     * Creates a Route using existing Stations.
      */
     private static void createRouteByAdmin() {
 
@@ -1556,7 +2402,8 @@ public class Main {
         );
 
         String routeId =
-                scanner.nextLine().trim();
+                scanner.nextLine()
+                        .trim();
 
         if (routeId.equalsIgnoreCase("X")) {
             return;
@@ -1585,7 +2432,8 @@ public class Main {
         );
 
         String sourceName =
-                scanner.nextLine().trim();
+                scanner.nextLine()
+                        .trim();
 
         if (sourceName.equalsIgnoreCase("X")) {
             return;
@@ -1610,7 +2458,8 @@ public class Main {
         );
 
         String destinationName =
-                scanner.nextLine().trim();
+                scanner.nextLine()
+                        .trim();
 
         if (destinationName.equalsIgnoreCase("X")) {
             return;
@@ -1644,7 +2493,8 @@ public class Main {
         );
 
         String distanceInput =
-                scanner.nextLine().trim();
+                scanner.nextLine()
+                        .trim();
 
         double distanceKm;
 
@@ -1717,7 +2567,7 @@ public class Main {
     }
 
     /**
-     * Demonstrates RouteService.findRoute().
+     * Finds a Route using Stations.
      */
     private static void findRouteByAdmin() {
 
@@ -1744,7 +2594,8 @@ public class Main {
         );
 
         String sourceName =
-                scanner.nextLine().trim();
+                scanner.nextLine()
+                        .trim();
 
         if (sourceName.equalsIgnoreCase("X")) {
             return;
@@ -1769,7 +2620,8 @@ public class Main {
         );
 
         String destinationName =
-                scanner.nextLine().trim();
+                scanner.nextLine()
+                        .trim();
 
         if (destinationName.equalsIgnoreCase("X")) {
             return;
@@ -1819,14 +2671,11 @@ public class Main {
 
     /**
      * Admin User Management menu.
-     *
-     * Uses lecturer-required UserService
-     * rather than adding user management
-     * methods into Admin.
      */
     private static void manageUsers() {
 
-        boolean managingUsers = true;
+        boolean managingUsers =
+                true;
 
         while (managingUsers) {
 
@@ -1871,7 +2720,8 @@ public class Main {
             );
 
             String choice =
-                    scanner.nextLine().trim();
+                    scanner.nextLine()
+                            .trim();
 
             switch (choice) {
 
@@ -1889,7 +2739,8 @@ public class Main {
 
                 case "X":
                 case "x":
-                    managingUsers = false;
+                    managingUsers =
+                            false;
                     break;
 
                 default:
@@ -1901,7 +2752,7 @@ public class Main {
     }
 
     /**
-     * Displays all registered Users.
+     * Displays registered Users.
      */
     private static void viewUsersByAdmin() {
 
@@ -1913,8 +2764,7 @@ public class Main {
     }
 
     /**
-     * Allows an authenticated Admin
-     * to create a Passenger account.
+     * Admin creates a Passenger.
      */
     private static void addPassengerByAdmin() {
 
@@ -1937,7 +2787,8 @@ public class Main {
         );
 
         String userId =
-                scanner.nextLine().trim();
+                scanner.nextLine()
+                        .trim();
 
         if (userId.equalsIgnoreCase("X")) {
             return;
@@ -1948,14 +2799,16 @@ public class Main {
         );
 
         String name =
-                scanner.nextLine().trim();
+                scanner.nextLine()
+                        .trim();
 
         System.out.print(
                 "Email: "
         );
 
         String email =
-                scanner.nextLine().trim();
+                scanner.nextLine()
+                        .trim();
 
         System.out.print(
                 "Password: "
@@ -1994,11 +2847,7 @@ public class Main {
     }
 
     /**
-     * Allows an authenticated Admin
-     * to create another Admin account.
-     *
-     * The new Admin is immediately connected
-     * to the live Station, Train and Report services.
+     * Admin creates another Admin.
      */
     private static void addAdminByAdmin() {
 
@@ -2021,7 +2870,8 @@ public class Main {
         );
 
         String userId =
-                scanner.nextLine().trim();
+                scanner.nextLine()
+                        .trim();
 
         if (userId.equalsIgnoreCase("X")) {
             return;
@@ -2032,14 +2882,16 @@ public class Main {
         );
 
         String name =
-                scanner.nextLine().trim();
+                scanner.nextLine()
+                        .trim();
 
         System.out.print(
                 "Email: "
         );
 
         String email =
-                scanner.nextLine().trim();
+                scanner.nextLine()
+                        .trim();
 
         System.out.print(
                 "Password: "
@@ -2060,10 +2912,6 @@ public class Main {
             return;
         }
 
-        /*
-         * Create a fully connected Admin so
-         * the account works immediately without restart.
-         */
         Admin newAdmin =
                 new Admin(
                         userId,
@@ -2176,7 +3024,7 @@ public class Main {
     }
 
     /**
-     * Handles Passenger wallet top-up.
+     * Passenger wallet top-up.
      */
     private static void topUpBalance(
             Passenger passenger) {
@@ -2197,7 +3045,8 @@ public class Main {
         );
 
         String input =
-                scanner.nextLine().trim();
+                scanner.nextLine()
+                        .trim();
 
         System.out.println();
 
@@ -2292,7 +3141,8 @@ public class Main {
         );
 
         String routeId =
-                scanner.nextLine().trim();
+                scanner.nextLine()
+                        .trim();
 
         if (routeId.equalsIgnoreCase("X")) {
             return;
@@ -2351,9 +3201,11 @@ public class Main {
 
         System.out.println(
                 "Route       : "
-                        + selectedRoute.getSource().getName()
+                        + selectedRoute.getSource()
+                        .getName()
                         + " -> "
-                        + selectedRoute.getDestination().getName()
+                        + selectedRoute.getDestination()
+                        .getName()
         );
 
         System.out.println(
@@ -2373,7 +3225,8 @@ public class Main {
 
         System.out.println();
 
-        if (passenger.getBalance() < fare) {
+        if (passenger.getBalance()
+                < fare) {
 
             System.out.println(
                     "Insufficient balance."
@@ -2393,9 +3246,11 @@ public class Main {
         );
 
         String confirmation =
-                scanner.nextLine().trim();
+                scanner.nextLine()
+                        .trim();
 
-        if (!confirmation.equalsIgnoreCase("Y")) {
+        if (!confirmation
+                .equalsIgnoreCase("Y")) {
 
             showMessage(
                     "Purchase cancelled."
@@ -2411,6 +3266,10 @@ public class Main {
             return;
         }
 
+        /*
+         * Real-life order:
+         * payment must succeed before Ticket issue.
+         */
         boolean paymentSuccessful =
                 paymentService.processPayment(
                         payment,
@@ -2484,21 +3343,25 @@ public class Main {
     }
 
     /**
-     * Warns Passenger when ACTIVE Ticket(s)
-     * already exist.
+     * Warns Passenger about existing
+     * ACTIVE Tickets.
      */
     private static boolean confirmActiveTicketWarning(
             Passenger passenger,
             Route selectedRoute,
             TicketType selectedTicketType) {
 
-        int activeTicketCount = 0;
+        int activeTicketCount =
+                0;
 
-        Ticket exactDuplicate = null;
+        Ticket exactDuplicate =
+                null;
 
-        for (Ticket ticket : tickets) {
+        for (Ticket ticket :
+                tickets) {
 
-            if (ticket.getPassenger() == passenger
+            if (ticket.getPassenger()
+                    == passenger
                     && ticket.getStatus()
                     == TicketStatus.ACTIVE) {
 
@@ -2516,7 +3379,8 @@ public class Main {
 
                 if (sameRoute
                         && sameType
-                        && exactDuplicate == null) {
+                        && exactDuplicate
+                        == null) {
 
                     exactDuplicate =
                             ticket;
@@ -2585,9 +3449,11 @@ public class Main {
 
         System.out.println(
                 "Route       : "
-                        + selectedRoute.getSource().getName()
+                        + selectedRoute.getSource()
+                        .getName()
                         + " -> "
-                        + selectedRoute.getDestination().getName()
+                        + selectedRoute.getDestination()
+                        .getName()
         );
 
         System.out.println(
@@ -2604,13 +3470,18 @@ public class Main {
             );
 
             String choice =
-                    scanner.nextLine().trim();
+                    scanner.nextLine()
+                            .trim();
 
-            if (choice.equalsIgnoreCase("Y")) {
+            if (choice
+                    .equalsIgnoreCase("Y")) {
+
                 return true;
             }
 
-            if (choice.equalsIgnoreCase("N")) {
+            if (choice
+                    .equalsIgnoreCase("N")) {
+
                 return false;
             }
 
@@ -2621,7 +3492,7 @@ public class Main {
     }
 
     /**
-     * Passenger cancellation workflow.
+     * Passenger Ticket cancellation.
      */
     private static void cancelPassengerTicket(
             Passenger passenger) {
@@ -2634,11 +3505,14 @@ public class Main {
 
         System.out.println();
 
-        boolean activeTicketFound = false;
+        boolean activeTicketFound =
+                false;
 
-        for (Ticket ticket : tickets) {
+        for (Ticket ticket :
+                tickets) {
 
-            if (ticket.getPassenger() == passenger
+            if (ticket.getPassenger()
+                    == passenger
                     && ticket.getStatus()
                     == TicketStatus.ACTIVE) {
 
@@ -2648,7 +3522,8 @@ public class Main {
                         "-------------------------"
                 );
 
-                activeTicketFound = true;
+                activeTicketFound =
+                        true;
             }
         }
 
@@ -2670,9 +3545,12 @@ public class Main {
         );
 
         String ticketId =
-                scanner.nextLine().trim();
+                scanner.nextLine()
+                        .trim();
 
-        if (ticketId.equalsIgnoreCase("X")) {
+        if (ticketId
+                .equalsIgnoreCase("X")) {
+
             return;
         }
 
@@ -2729,9 +3607,11 @@ public class Main {
             );
 
             String confirmation =
-                    scanner.nextLine().trim();
+                    scanner.nextLine()
+                            .trim();
 
-            if (confirmation.equalsIgnoreCase("N")) {
+            if (confirmation
+                    .equalsIgnoreCase("N")) {
 
                 showMessage(
                         "Cancellation cancelled."
@@ -2740,7 +3620,9 @@ public class Main {
                 return;
             }
 
-            if (confirmation.equalsIgnoreCase("Y")) {
+            if (confirmation
+                    .equalsIgnoreCase("Y")) {
+
                 break;
             }
 
@@ -2791,18 +3673,21 @@ public class Main {
     }
 
     /**
-     * Finds a Ticket belonging to
-     * the logged-in Passenger.
+     * Finds Passenger's Ticket by ID.
      */
     private static Ticket findPassengerTicketById(
             Passenger passenger,
             String ticketId) {
 
-        for (Ticket ticket : tickets) {
+        for (Ticket ticket :
+                tickets) {
 
-            if (ticket.getPassenger() == passenger
+            if (ticket.getPassenger()
+                    == passenger
                     && ticket.getTicketId()
-                    .equalsIgnoreCase(ticketId)) {
+                    .equalsIgnoreCase(
+                            ticketId
+                    )) {
 
                 return ticket;
             }
@@ -2812,7 +3697,7 @@ public class Main {
     }
 
     /**
-     * Selects Ticket Type.
+     * Selects Ticket type.
      */
     private static TicketType selectTicketType() {
 
@@ -2851,7 +3736,8 @@ public class Main {
             );
 
             String choice =
-                    scanner.nextLine().trim();
+                    scanner.nextLine()
+                            .trim();
 
             switch (choice) {
 
@@ -2912,7 +3798,8 @@ public class Main {
             );
 
             String choice =
-                    scanner.nextLine().trim();
+                    scanner.nextLine()
+                            .trim();
 
             switch (choice) {
 
@@ -2926,7 +3813,8 @@ public class Main {
                     );
 
                     String cardNumber =
-                            scanner.nextLine().trim();
+                            scanner.nextLine()
+                                    .trim();
 
                     return new CardPayment(
                             cardNumber
@@ -2950,10 +3838,13 @@ public class Main {
     private static Route findRouteById(
             String routeId) {
 
-        for (Route route : routes) {
+        for (Route route :
+                routes) {
 
             if (route.getRouteId()
-                    .equalsIgnoreCase(routeId)) {
+                    .equalsIgnoreCase(
+                            routeId
+                    )) {
 
                 return route;
             }
@@ -2963,8 +3854,7 @@ public class Main {
     }
 
     /**
-     * Displays Tickets belonging to
-     * the logged-in Passenger.
+     * Displays logged-in Passenger's Tickets.
      */
     private static void viewPassengerTickets(
             Passenger passenger) {
@@ -2977,9 +3867,11 @@ public class Main {
 
         System.out.println();
 
-        boolean found = false;
+        boolean found =
+                false;
 
-        for (Ticket ticket : tickets) {
+        for (Ticket ticket :
+                tickets) {
 
             if (ticket.getPassenger()
                     == passenger) {
@@ -2990,7 +3882,8 @@ public class Main {
                         "-------------------------"
                 );
 
-                found = true;
+                found =
+                        true;
             }
         }
 
@@ -3005,7 +3898,7 @@ public class Main {
     }
 
     /**
-     * Displays Main Menu.
+     * Displays Main menu.
      */
     private static void displayMainMenu() {
 
@@ -3069,9 +3962,12 @@ public class Main {
             );
 
             String choice =
-                    scanner.nextLine().trim();
+                    scanner.nextLine()
+                            .trim();
 
-            if (choice.equalsIgnoreCase("X")) {
+            if (choice
+                    .equalsIgnoreCase("X")) {
+
                 return;
             }
 
