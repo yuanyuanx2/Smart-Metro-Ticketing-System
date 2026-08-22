@@ -20,21 +20,61 @@ public class StationService {
     }
 
     /**
-     * Adds a station to the station list.
+     * Adds a Station to the station list.
+     *
+     * Station IDs and names must be unique.
      */
     public void addStation(Station station) {
-        stations.add(station);
+
+        if (station == null) {
+
+            throw new IllegalArgumentException(
+                    "Station cannot be null."
+            );
+        }
+
+        for (Station existingStation : stations) {
+
+            if (existingStation.getStationId()
+                    .equalsIgnoreCase(
+                            station.getStationId()
+                    )) {
+
+                throw new IllegalArgumentException(
+                        "Station ID already exists: "
+                                + station.getStationId()
+                );
+            }
+
+            if (existingStation.getName()
+                    .equalsIgnoreCase(
+                            station.getName()
+                    )) {
+
+                throw new IllegalArgumentException(
+                        "Station name already exists: "
+                                + station.getName()
+                );
+            }
+        }
+
+        stations.add(
+                station
+        );
     }
 
     /**
-     * Searches for a station by name.
+     * Searches for a Station by name.
      *
-     * @return the matching Station, or null if not found
+     * @return matching Station, or null if not found
      */
     public Station searchStation(String name) {
 
         for (Station station : stations) {
-            if (station.getName().equalsIgnoreCase(name)) {
+
+            if (station.getName()
+                    .equalsIgnoreCase(name)) {
+
                 return station;
             }
         }
@@ -43,7 +83,8 @@ public class StationService {
     }
 
     /**
-     * Sorts stations alphabetically by station name.
+     * Sorts Stations alphabetically
+     * by station name.
      */
     public void sortStationsByName() {
 
@@ -53,30 +94,43 @@ public class StationService {
                         String.CASE_INSENSITIVE_ORDER
                 );
 
-        stations.sort(nameComparator);
+        stations.sort(
+                nameComparator
+        );
     }
 
     /**
-     * Returns a copy of the current station list
-     * for persistence and other controlled use.
+     * Returns a copy of the current Station list
+     * for persistence and controlled use.
      */
     public ArrayList<Station> getStations() {
-        return new ArrayList<>(stations);
+
+        return new ArrayList<>(
+                stations
+        );
     }
 
     /**
-     * Displays all stations.
+     * Displays all Stations.
      */
     public void viewStations() {
 
         if (stations.isEmpty()) {
-            System.out.println("No stations available.");
+
+            System.out.println(
+                    "No stations available."
+            );
+
             return;
         }
 
         for (Station station : stations) {
+
             station.displayInfo();
-            System.out.println("-------------------------");
+
+            System.out.println(
+                    "-------------------------"
+            );
         }
     }
 }

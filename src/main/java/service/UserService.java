@@ -11,91 +11,167 @@ import java.util.HashMap;
  */
 public class UserService {
 
-    // 1. User collection - store registered users using user ID as the stable key
+    // Store registered users using user ID as the stable key
     private HashMap<String, User> users;
 
-    // 2. Constructor - initialize an empty user collection
+    /**
+     * Creates an empty User collection.
+     */
     public UserService() {
         this.users = new HashMap<>();
     }
 
     /**
-     * Creates a UserService using users restored from file storage.
+     * Creates a UserService using Users
+     * restored from file storage.
      */
     public UserService(HashMap<String, User> users) {
         this.users = users;
     }
 
-    // 3. Register user - validate and add a new user to the collection
+    /**
+     * Validates and registers a new User.
+     */
     public void registerUser(User user) {
 
-        String userId = user.getUserId();
-        String name = user.getName();
-        String email = user.getEmail();
+        if (user == null) {
 
-        // Reject reserved "|" character because it will be used for TXT file storage
-        if (userId.contains("|") || name.contains("|") || email.contains("|")) {
-            System.out.println("Registration failed: The character '|' is not allowed.");
+            System.out.println(
+                    "Registration failed: User cannot be null."
+            );
+
             return;
         }
 
-        // Validate that the email follows a basic email format
-        if (!email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
-            System.out.println("Registration failed: Invalid email format.");
+        String userId =
+                user.getUserId();
+
+        String name =
+                user.getName();
+
+        String email =
+                user.getEmail();
+
+        String password =
+                user.getPassword();
+
+        /*
+         * "|" is reserved as the TXT file delimiter.
+         */
+        if (userId.contains("|")
+                || name.contains("|")
+                || email.contains("|")
+                || password.contains("|")) {
+
+            System.out.println(
+                    "Registration failed: The character '|' is not allowed."
+            );
+
             return;
         }
 
-        // Prevent registration if the user ID is already used
+        /*
+         * Validate basic email format.
+         */
+        if (!email.matches(
+                "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
+        )) {
+
+            System.out.println(
+                    "Registration failed: Invalid email format."
+            );
+
+            return;
+        }
+
+        /*
+         * User IDs must be unique.
+         */
         if (users.containsKey(userId)) {
-            System.out.println("Registration failed: User ID is already registered.");
+
+            System.out.println(
+                    "Registration failed: User ID is already registered."
+            );
+
             return;
         }
 
-        // Prevent registration if the email is already used
+        /*
+         * Email addresses must be unique.
+         */
         for (User existingUser : users.values()) {
-            if (existingUser.getEmail().equalsIgnoreCase(email)) {
-                System.out.println("Registration failed: Email is already registered.");
+
+            if (existingUser.getEmail()
+                    .equalsIgnoreCase(email)) {
+
+                System.out.println(
+                        "Registration failed: Email is already registered."
+                );
+
                 return;
             }
         }
 
-        // Store the user ID as the key and the User object as the value
-        users.put(userId, user);
+        users.put(
+                userId,
+                user
+        );
 
-        System.out.println("Registration successful.");
+        System.out.println(
+                "Registration successful."
+        );
     }
 
-    // 4. Login - return the matching user if the credentials are correct
-    public User login(String email, String password)
+    /**
+     * Returns the matching User
+     * when login credentials are correct.
+     */
+    public User login(
+            String email,
+            String password)
             throws InvalidLoginException {
 
-        // Search through registered users for matching login credentials
         for (User user : users.values()) {
 
-            if (user.login(email, password)) {
+            if (user.login(
+                    email,
+                    password
+            )) {
+
                 return user;
             }
         }
 
-        // Throw a custom exception when login credentials are incorrect
-        throw new InvalidLoginException("Invalid email or password.");
+        throw new InvalidLoginException(
+                "Invalid email or password."
+        );
     }
 
-    // 5. View all users - display the profile of every registered user
+    /**
+     * Displays all registered Users.
+     */
     public void viewAllUsers() {
 
-        // Display a message if no users are currently registered
         if (users.isEmpty()) {
-            System.out.println("No registered users found.");
+
+            System.out.println(
+                    "No registered users found."
+            );
+
             return;
         }
 
-        System.out.println("===== REGISTERED USERS =====");
+        System.out.println(
+                "===== REGISTERED USERS ====="
+        );
 
-        // Loop through every User object stored in the HashMap
         for (User user : users.values()) {
+
             user.viewProfile();
-            System.out.println("----------------------------");
+
+            System.out.println(
+                    "----------------------------"
+            );
         }
     }
 }
