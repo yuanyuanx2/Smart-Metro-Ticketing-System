@@ -155,11 +155,112 @@ public class Main {
 
         clearScreen();
 
+        /*
+         * Lecturer requirement:
+         * save important live data before exit.
+         */
+        saveImportantData();
+
+        System.out.println();
+
         System.out.println(
                 "Thank you for using Smart Metro Ticketing System."
         );
 
         scanner.close();
+    }
+
+    /**
+     * Saves all important live system data
+     * before the application exits.
+     */
+    private static void saveImportantData() {
+
+        boolean usersSaved =
+                saveDataSafely(
+                        users,
+                        USERS_FILE,
+                        "users"
+                );
+
+        boolean stationsSaved =
+                saveDataSafely(
+                        stationService.getStations(),
+                        STATIONS_FILE,
+                        "stations"
+                );
+
+        boolean trainsSaved =
+                saveDataSafely(
+                        trainService.getTrains(),
+                        TRAINS_FILE,
+                        "trains"
+                );
+
+        boolean routesSaved =
+                saveDataSafely(
+                        routes,
+                        ROUTES_FILE,
+                        "routes"
+                );
+
+        boolean ticketsSaved =
+                saveDataSafely(
+                        tickets,
+                        TICKETS_FILE,
+                        "tickets"
+                );
+
+        System.out.println();
+
+        if (usersSaved
+                && stationsSaved
+                && trainsSaved
+                && routesSaved
+                && ticketsSaved) {
+
+            System.out.println(
+                    "All important data saved successfully."
+            );
+
+        } else {
+
+            System.out.println(
+                    "Warning: Some data could not be saved."
+            );
+        }
+    }
+
+    /**
+     * Attempts to save one group of data
+     * without preventing the remaining data
+     * groups from being saved.
+     */
+    private static boolean saveDataSafely(
+            Object data,
+            String fileName,
+            String dataName) {
+
+        try {
+
+            fileManager.saveData(
+                    data,
+                    fileName
+            );
+
+            return true;
+
+        } catch (FileProcessingException e) {
+
+            System.out.println(
+                    "Unable to save "
+                            + dataName
+                            + ": "
+                            + e.getMessage()
+            );
+
+            return false;
+        }
     }
 
     /**

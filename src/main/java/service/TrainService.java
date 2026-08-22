@@ -47,6 +47,14 @@ public class TrainService {
     }
 
     /**
+     * Returns a copy of the current train list
+     * for persistence and other controlled use.
+     */
+    public ArrayList<Train> getTrains() {
+        return new ArrayList<>(trains);
+    }
+
+    /**
      * Displays all trains.
      */
     public void viewTrains() {

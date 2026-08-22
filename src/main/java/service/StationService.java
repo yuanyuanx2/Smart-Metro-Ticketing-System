@@ -57,6 +57,14 @@ public class StationService {
     }
 
     /**
+     * Returns a copy of the current station list
+     * for persistence and other controlled use.
+     */
+    public ArrayList<Station> getStations() {
+        return new ArrayList<>(stations);
+    }
+
+    /**
      * Displays all stations.
      */
     public void viewStations() {
