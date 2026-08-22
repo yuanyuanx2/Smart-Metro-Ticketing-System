@@ -111,11 +111,8 @@ public class Main {
                 );
 
         /*
-         * Admin accounts restored from TXT were created using
-         * the persistence constructor.
-         *
-         * Reconnect them to the live shared services now that
-         * those services have been fully created.
+         * Reconnect persisted Admin accounts to
+         * the shared live services.
          */
         connectAdminServices();
 
@@ -408,7 +405,7 @@ public class Main {
 
     /**
      * Reconnects persisted Admin accounts to
-     * the live shared system services.
+     * the shared live services.
      */
     private static void connectAdminServices() {
 
@@ -440,11 +437,6 @@ public class Main {
             }
         }
 
-        /*
-         * UserService continues using the same HashMap,
-         * but recreate it explicitly for clarity after
-         * reconnecting the Admin objects.
-         */
         userService =
                 new UserService(
                         users
@@ -695,8 +687,8 @@ public class Main {
                     break;
 
                 case "3":
-                    showMessage(
-                            "Train management will be connected next."
+                    manageTrains(
+                            admin
                     );
                     break;
 
@@ -881,7 +873,8 @@ public class Main {
 
                 case "X":
                 case "x":
-                    managingStations = false;
+                    managingStations =
+                            false;
                     break;
 
                 default:
@@ -894,9 +887,6 @@ public class Main {
 
     /**
      * Allows Admin to add a Station.
-     *
-     * Admin.addStation() is used to preserve
-     * the lecturer-required class relationship.
      */
     private static void addStationByAdmin(
             Admin admin) {
@@ -940,9 +930,6 @@ public class Main {
         String location =
                 scanner.nextLine().trim();
 
-        /*
-         * All fields are required.
-         */
         if (stationId.isBlank()
                 || name.isBlank()
                 || location.isBlank()) {
@@ -954,9 +941,6 @@ public class Main {
             return;
         }
 
-        /*
-         * Pipe character is reserved by TXT persistence.
-         */
         if (stationId.contains("|")
                 || name.contains("|")
                 || location.contains("|")) {
@@ -968,12 +952,6 @@ public class Main {
             return;
         }
 
-        /*
-         * Prevent duplicate station names.
-         *
-         * StationService.searchStation()
-         * already performs case-insensitive searching.
-         */
         Station existingStation =
                 stationService.searchStation(
                         name
@@ -1011,17 +989,10 @@ public class Main {
 
         try {
 
-            /*
-             * Use the lecturer-required Admin method.
-             */
             admin.addStation(
                     station
             );
 
-            /*
-             * Re-sort Stations alphabetically
-             * after adding a new Station.
-             */
             stationService.sortStationsByName();
 
             clearScreen();
@@ -1040,7 +1011,8 @@ public class Main {
 
             station.displayInfo();
 
-        } catch (IllegalStateException e) {
+        } catch (IllegalArgumentException
+                 | IllegalStateException e) {
 
             clearScreen();
 
@@ -1054,8 +1026,7 @@ public class Main {
     }
 
     /**
-     * Allows Admin to search for a Station
-     * by Station name.
+     * Admin searches for a Station by name.
      */
     private static void searchStationByAdmin() {
 
@@ -1116,6 +1087,249 @@ public class Main {
 
             station.displayInfo();
         }
+
+        waitForBack();
+    }
+
+    /**
+     * Admin Train Management menu.
+     */
+    private static void manageTrains(
+            Admin admin) {
+
+        boolean managingTrains =
+                true;
+
+        while (managingTrains) {
+
+            clearScreen();
+
+            System.out.println(
+                    "========================================"
+            );
+
+            System.out.println(
+                    "           TRAIN MANAGEMENT"
+            );
+
+            System.out.println(
+                    "========================================"
+            );
+
+            System.out.println(
+                    "1. Add Train"
+            );
+
+            System.out.println(
+                    "2. View Trains"
+            );
+
+            System.out.println();
+
+            System.out.println(
+                    "[X] Back"
+            );
+
+            System.out.println(
+                    "========================================"
+            );
+
+            System.out.print(
+                    "Enter choice: "
+            );
+
+            String choice =
+                    scanner.nextLine().trim();
+
+            switch (choice) {
+
+                case "1":
+                    addTrainByAdmin(
+                            admin
+                    );
+                    break;
+
+                case "2":
+                    viewTrainsByAdmin();
+                    break;
+
+                case "X":
+                case "x":
+                    managingTrains =
+                            false;
+                    break;
+
+                default:
+                    showMessage(
+                            "Invalid choice. Please try again."
+                    );
+            }
+        }
+    }
+
+    /**
+     * Allows Admin to add a Train.
+     *
+     * Uses Admin.addTrain() so the lecturer-required
+     * relationship is preserved.
+     */
+    private static void addTrainByAdmin(
+            Admin admin) {
+
+        clearScreen();
+
+        System.out.println(
+                "========== ADD TRAIN =========="
+        );
+
+        System.out.println();
+
+        System.out.println(
+                "[X] Back"
+        );
+
+        System.out.println();
+
+        System.out.print(
+                "Train ID: "
+        );
+
+        String trainId =
+                scanner.nextLine().trim();
+
+        if (trainId.equalsIgnoreCase("X")) {
+            return;
+        }
+
+        System.out.print(
+                "Train Name: "
+        );
+
+        String trainName =
+                scanner.nextLine().trim();
+
+        System.out.print(
+                "Capacity: "
+        );
+
+        String capacityInput =
+                scanner.nextLine().trim();
+
+        /*
+         * Required fields.
+         */
+        if (trainId.isBlank()
+                || trainName.isBlank()
+                || capacityInput.isBlank()) {
+
+            showMessage(
+                    "Train creation failed: All fields are required."
+            );
+
+            return;
+        }
+
+        /*
+         * TXT persistence delimiter protection.
+         */
+        if (trainId.contains("|")
+                || trainName.contains("|")
+                || capacityInput.contains("|")) {
+
+            showMessage(
+                    "Train creation failed: Character | is not allowed."
+            );
+
+            return;
+        }
+
+        int capacity;
+
+        try {
+
+            capacity =
+                    Integer.parseInt(
+                            capacityInput
+                    );
+
+        } catch (NumberFormatException e) {
+
+            showMessage(
+                    "Train creation failed: Capacity must be a whole number."
+            );
+
+            return;
+        }
+
+        if (capacity <= 0) {
+
+            showMessage(
+                    "Train creation failed: Capacity must be greater than 0."
+            );
+
+            return;
+        }
+
+        Train train =
+                new Train(
+                        trainId,
+                        trainName,
+                        capacity
+                );
+
+        try {
+
+            /*
+             * Lecturer-required Admin.addTrain().
+             */
+            admin.addTrain(
+                    train
+            );
+
+            clearScreen();
+
+            System.out.println(
+                    "========== TRAIN ADDED =========="
+            );
+
+            System.out.println();
+
+            System.out.println(
+                    "Train added successfully."
+            );
+
+            System.out.println();
+
+            train.displayTrain();
+
+        } catch (IllegalArgumentException
+                 | IllegalStateException e) {
+
+            clearScreen();
+
+            System.out.println(
+                    "Unable to add train: "
+                            + e.getMessage()
+            );
+        }
+
+        waitForBack();
+    }
+
+    /**
+     * Displays all Trains.
+     */
+    private static void viewTrainsByAdmin() {
+
+        clearScreen();
+
+        System.out.println(
+                "========== METRO TRAINS =========="
+        );
+
+        System.out.println();
+
+        trainService.viewTrains();
 
         waitForBack();
     }
