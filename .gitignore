@@ -14,3 +14,10 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Runtime JSON backups
+src/main/resources/data/json/
+
+# Generated reports
+src/main/resources/data/system_report_*.txt
+src/main/resources/data/system_report_*.pdf

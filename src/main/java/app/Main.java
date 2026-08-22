@@ -18,7 +18,9 @@ import model.User;
 import payment.CardPayment;
 import payment.CashPayment;
 import payment.Payment;
+import repository.JSONFileManager;
 import repository.TXTFileManager;
+import service.JSONBackupService;
 import service.PaymentService;
 import service.ReportService;
 import service.RouteService;
@@ -62,8 +64,7 @@ public class Main {
             );
 
     /*
-     * One shared TXTFileManager preserves
-     * loaded object relationships.
+     * Lecturer-required TXT persistence manager.
      */
     private static final TXTFileManager fileManager =
             new TXTFileManager();
@@ -121,10 +122,6 @@ public class Main {
                         tickets
                 );
 
-        /*
-         * Reconnect persisted Admin accounts
-         * to the live system services.
-         */
         connectAdminServices();
 
         boolean running =
@@ -243,7 +240,7 @@ public class Main {
     }
 
     /**
-     * Attempts to save one data group.
+     * Attempts to save one TXT data group.
      */
     private static boolean saveDataSafely(
             Object data,
@@ -839,6 +836,10 @@ public class Main {
                     );
                     break;
 
+                case "7":
+                    manageDataBackup();
+                    break;
+
                 case "0":
                     loggedIn =
                             false;
@@ -850,6 +851,251 @@ public class Main {
                     );
             }
         }
+    }
+
+    /**
+     * Bonus JSON backup menu.
+     */
+    private static void manageDataBackup() {
+
+        boolean managingBackup =
+                true;
+
+        while (managingBackup) {
+
+            clearScreen();
+
+            System.out.println(
+                    "========================================"
+            );
+
+            System.out.println(
+                    "             DATA BACKUP"
+            );
+
+            System.out.println(
+                    "========================================"
+            );
+
+            System.out.println(
+                    "Primary Storage: TXT"
+            );
+
+            System.out.println(
+                    "Backup Format  : JSON"
+            );
+
+            System.out.println();
+
+            System.out.println(
+                    "1. Create JSON Backup"
+            );
+
+            System.out.println(
+                    "2. Verify JSON Backup"
+            );
+
+            System.out.println();
+
+            System.out.println(
+                    "[X] Back"
+            );
+
+            System.out.println(
+                    "========================================"
+            );
+
+            System.out.print(
+                    "Enter choice: "
+            );
+
+            String choice =
+                    scanner.nextLine()
+                            .trim();
+
+            switch (choice) {
+
+                case "1":
+                    createJsonBackup();
+                    break;
+
+                case "2":
+                    verifyJsonBackup();
+                    break;
+
+                case "X":
+                case "x":
+                    managingBackup =
+                            false;
+                    break;
+
+                default:
+                    showMessage(
+                            "Invalid choice. Please try again."
+                    );
+            }
+        }
+    }
+
+    /**
+     * Creates a complete JSON snapshot
+     * of the current live system data.
+     */
+    private static void createJsonBackup() {
+
+        clearScreen();
+
+        /*
+         * A fresh JSONFileManager is used for each
+         * backup operation so no stale lookup state
+         * is carried between backup sessions.
+         */
+        JSONBackupService backupService =
+                new JSONBackupService(
+                        new JSONFileManager()
+                );
+
+        try {
+
+            backupService.createBackup(
+                    users,
+                    stationService.getStations(),
+                    trainService.getTrains(),
+                    routes,
+                    tickets
+            );
+
+            System.out.println(
+                    "JSON backup created successfully."
+            );
+
+            System.out.println();
+
+            System.out.println(
+                    "Backup location:"
+            );
+
+            System.out.println(
+                    backupService.getBackupDirectory()
+            );
+
+            System.out.println();
+
+            System.out.println(
+                    "Files created:"
+            );
+
+            System.out.println(
+                    "users.json"
+            );
+
+            System.out.println(
+                    "stations.json"
+            );
+
+            System.out.println(
+                    "trains.json"
+            );
+
+            System.out.println(
+                    "routes.json"
+            );
+
+            System.out.println(
+                    "tickets.json"
+            );
+
+        } catch (FileProcessingException e) {
+
+            System.out.println(
+                    "JSON backup failed: "
+                            + e.getMessage()
+            );
+        }
+
+        waitForBack();
+    }
+
+    /**
+     * Reloads the JSON backup and checks
+     * that all current records and object
+     * relationships can be reconstructed.
+     */
+    private static void verifyJsonBackup() {
+
+        clearScreen();
+
+        /*
+         * Verification intentionally uses a fresh
+         * JSONFileManager so reconstruction starts
+         * from an empty lookup state.
+         */
+        JSONBackupService backupService =
+                new JSONBackupService(
+                        new JSONFileManager()
+                );
+
+        try {
+
+            boolean valid =
+                    backupService.verifyBackup(
+                            users.size(),
+                            stationService
+                                    .getStations()
+                                    .size(),
+                            trainService
+                                    .getTrains()
+                                    .size(),
+                            routes.size(),
+                            tickets.size()
+                    );
+
+            if (valid) {
+
+                System.out.println(
+                        "JSON backup verification PASSED."
+                );
+
+                System.out.println();
+
+                System.out.println(
+                        "The backup matches the current system data."
+                );
+
+                System.out.println(
+                        "Users, stations, trains, routes and tickets"
+                );
+
+                System.out.println(
+                        "were loaded successfully from JSON."
+                );
+
+            } else {
+
+                System.out.println(
+                        "JSON backup verification FAILED."
+                );
+
+                System.out.println();
+
+                System.out.println(
+                        "The JSON backup does not match"
+                );
+
+                System.out.println(
+                        "the current live system record counts."
+                );
+            }
+
+        } catch (FileProcessingException e) {
+
+            System.out.println(
+                    "Unable to verify JSON backup: "
+                            + e.getMessage()
+            );
+        }
+
+        waitForBack();
     }
 
     /**
@@ -1479,8 +1725,7 @@ public class Main {
     }
 
     /**
-     * Writes a report using the lecturer-compatible
-     * TXT file manager.
+     * Writes a report through TXTFileManager.
      */
     private static void exportReportToTxt(
             ArrayList<String> report,
@@ -1520,7 +1765,7 @@ public class Main {
     }
 
     /**
-     * Creates unique report timestamp.
+     * Creates a unique report timestamp.
      */
     private static String createReportTimestamp() {
 
@@ -1532,8 +1777,6 @@ public class Main {
 
     /**
      * Reads and validates a year.
-     *
-     * X returns to the previous menu.
      */
     private static Integer readYear(
             String prompt) {
@@ -1581,8 +1824,6 @@ public class Main {
 
     /**
      * Reads and validates a month.
-     *
-     * X returns to the previous menu.
      */
     private static Integer readMonth(
             String prompt) {
@@ -1629,9 +1870,7 @@ public class Main {
     }
 
     /**
-     * Reads and validates a calendar quarter.
-     *
-     * X returns to the previous menu.
+     * Reads and validates a quarter.
      */
     private static Integer readQuarter(
             String prompt) {
@@ -1726,6 +1965,10 @@ public class Main {
 
         System.out.println(
                 "6. Reports"
+        );
+
+        System.out.println(
+                "7. Data Backup"
         );
 
         System.out.println(
@@ -3673,7 +3916,7 @@ public class Main {
     }
 
     /**
-     * Finds Passenger's Ticket by ID.
+     * Finds Passenger Ticket by ID.
      */
     private static Ticket findPassengerTicketById(
             Passenger passenger,
@@ -3854,7 +4097,7 @@ public class Main {
     }
 
     /**
-     * Displays logged-in Passenger's Tickets.
+     * Displays logged-in Passenger Tickets.
      */
     private static void viewPassengerTickets(
             Passenger passenger) {
