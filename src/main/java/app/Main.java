@@ -18,6 +18,7 @@ import model.User;
 import payment.CardPayment;
 import payment.CashPayment;
 import payment.Payment;
+import report.PDFReportExporter;
 import repository.JSONFileManager;
 import repository.TXTFileManager;
 import service.JSONBackupService;
@@ -58,32 +59,35 @@ public class Main {
     private static final String TICKETS_FILE =
             "src/main/resources/data/tickets.txt";
 
+    private static final String REPORT_DIRECTORY =
+            "src/main/resources/data/";
+
     private static final DateTimeFormatter REPORT_FILE_FORMAT =
             DateTimeFormatter.ofPattern(
                     "yyyyMMdd_HHmmss"
             );
 
     /*
-     * Lecturer-required TXT persistence manager.
+     * Lecturer-required TXT persistence.
      */
     private static final TXTFileManager fileManager =
             new TXTFileManager();
 
     /*
-     * Shared live User collection.
+     * PDF report exporter.
+     */
+    private static final PDFReportExporter pdfReportExporter =
+            new PDFReportExporter();
+
+    /*
+     * Shared live collections.
      */
     private static final HashMap<String, User> users =
             new HashMap<>();
 
-    /*
-     * Shared live Route collection.
-     */
     private static final ArrayList<Route> routes =
             new ArrayList<>();
 
-    /*
-     * Shared live Ticket collection.
-     */
     private static final ArrayList<Ticket> tickets =
             new ArrayList<>();
 
@@ -103,7 +107,7 @@ public class Main {
     public static void main(String[] args) {
 
         /*
-         * Required startup relationship order:
+         * Required relationship loading order:
          *
          * 1. Users
          * 2. Stations
@@ -163,10 +167,6 @@ public class Main {
 
         clearScreen();
 
-        /*
-         * Lecturer requirement:
-         * save important live data before exit.
-         */
         saveImportantData();
 
         System.out.println();
@@ -179,8 +179,8 @@ public class Main {
     }
 
     /**
-     * Saves all important live system data
-     * before application exit.
+     * Saves all important system data
+     * before the program exits.
      */
     private static void saveImportantData() {
 
@@ -240,7 +240,7 @@ public class Main {
     }
 
     /**
-     * Attempts to save one TXT data group.
+     * Safely saves one group of TXT data.
      */
     private static boolean saveDataSafely(
             Object data,
@@ -526,8 +526,8 @@ public class Main {
     }
 
     /**
-     * Reconnects persisted Admin accounts
-     * to live system services.
+     * Reconnects loaded Admin accounts
+     * to the live service objects.
      */
     private static void connectAdminServices() {
 
@@ -567,7 +567,7 @@ public class Main {
     }
 
     /**
-     * Public Passenger registration.
+     * Passenger registration.
      */
     private static void registerPassenger() {
 
@@ -854,7 +854,7 @@ public class Main {
     }
 
     /**
-     * Bonus JSON backup menu.
+     * JSON backup menu.
      */
     private static void manageDataBackup() {
 
@@ -938,18 +938,12 @@ public class Main {
     }
 
     /**
-     * Creates a complete JSON snapshot
-     * of the current live system data.
+     * Creates JSON backup.
      */
     private static void createJsonBackup() {
 
         clearScreen();
 
-        /*
-         * A fresh JSONFileManager is used for each
-         * backup operation so no stale lookup state
-         * is carried between backup sessions.
-         */
         JSONBackupService backupService =
                 new JSONBackupService(
                         new JSONFileManager()
@@ -1017,19 +1011,13 @@ public class Main {
     }
 
     /**
-     * Reloads the JSON backup and checks
-     * that all current records and object
-     * relationships can be reconstructed.
+     * Verifies JSON backup by loading
+     * the saved data again.
      */
     private static void verifyJsonBackup() {
 
         clearScreen();
 
-        /*
-         * Verification intentionally uses a fresh
-         * JSONFileManager so reconstruction starts
-         * from an empty lookup state.
-         */
         JSONBackupService backupService =
                 new JSONBackupService(
                         new JSONFileManager()
@@ -1284,19 +1272,19 @@ public class Main {
             switch (choice) {
 
                 case "1":
-                    exportAllTimeReportToTxt();
+                    exportAllTimeReport();
                     break;
 
                 case "2":
-                    exportMonthlyReportToTxt();
+                    exportMonthlyReport();
                     break;
 
                 case "3":
-                    exportQuarterlyReportToTxt();
+                    exportQuarterlyReport();
                     break;
 
                 case "4":
-                    exportYearlyReportToTxt();
+                    exportYearlyReport();
                     break;
 
                 case "X":
@@ -1343,7 +1331,7 @@ public class Main {
     }
 
     /**
-     * Ticket-type statistics.
+     * Ticket type statistics.
      */
     private static void viewTicketTypeStatistics() {
 
@@ -1379,7 +1367,7 @@ public class Main {
     }
 
     /**
-     * Monthly management report.
+     * Monthly report.
      */
     private static void viewMonthlyReport() {
 
@@ -1426,7 +1414,7 @@ public class Main {
     }
 
     /**
-     * Quarterly management report.
+     * Quarterly report.
      */
     private static void viewQuarterlyReport() {
 
@@ -1491,7 +1479,7 @@ public class Main {
     }
 
     /**
-     * Yearly management report.
+     * Yearly report.
      */
     private static void viewYearlyReport() {
 
@@ -1528,28 +1516,48 @@ public class Main {
     }
 
     /**
-     * Exports all-time report to TXT.
+     * Exports all-time report.
      */
-    private static void exportAllTimeReportToTxt() {
+    private static void exportAllTimeReport() {
 
         ArrayList<String> report =
                 reportService.buildExportReport();
 
-        String fileName =
-                "system_report_all_time_"
-                        + createReportTimestamp()
-                        + ".txt";
+        String format =
+                selectExportFormat();
 
-        exportReportToTxt(
-                report,
-                fileName
-        );
+        if (format == null) {
+            return;
+        }
+
+        String timestamp =
+                createReportTimestamp();
+
+        if (format.equals("TXT")) {
+
+            exportReportToTxt(
+                    report,
+                    "system_report_all_time_"
+                            + timestamp
+                            + ".txt"
+            );
+
+        } else {
+
+            exportReportToPdf(
+                    report,
+                    "Smart Metro Ticketing System - All-Time Report",
+                    "system_report_all_time_"
+                            + timestamp
+                            + ".pdf"
+            );
+        }
     }
 
     /**
-     * Exports monthly report to TXT.
+     * Exports monthly report.
      */
-    private static void exportMonthlyReportToTxt() {
+    private static void exportMonthlyReport() {
 
         clearScreen();
 
@@ -1589,24 +1597,60 @@ public class Main {
                         month
                 );
 
-        String fileName =
-                String.format(
-                        "system_report_monthly_%04d_%02d_%s.txt",
-                        year,
-                        month,
-                        createReportTimestamp()
-                );
+        String format =
+                selectExportFormat();
 
-        exportReportToTxt(
-                report,
-                fileName
-        );
+        if (format == null) {
+            return;
+        }
+
+        String timestamp =
+                createReportTimestamp();
+
+        if (format.equals("TXT")) {
+
+            String fileName =
+                    String.format(
+                            "system_report_monthly_%04d_%02d_%s.txt",
+                            year,
+                            month,
+                            timestamp
+                    );
+
+            exportReportToTxt(
+                    report,
+                    fileName
+            );
+
+        } else {
+
+            String fileName =
+                    String.format(
+                            "system_report_monthly_%04d_%02d_%s.pdf",
+                            year,
+                            month,
+                            timestamp
+                    );
+
+            String title =
+                    String.format(
+                            "Smart Metro Ticketing System - Monthly Report %04d-%02d",
+                            year,
+                            month
+                    );
+
+            exportReportToPdf(
+                    report,
+                    title,
+                    fileName
+            );
+        }
     }
 
     /**
-     * Exports quarterly report to TXT.
+     * Exports quarterly report.
      */
-    private static void exportQuarterlyReportToTxt() {
+    private static void exportQuarterlyReport() {
 
         clearScreen();
 
@@ -1664,24 +1708,60 @@ public class Main {
                         quarter
                 );
 
-        String fileName =
-                String.format(
-                        "system_report_quarterly_%04d_Q%d_%s.txt",
-                        year,
-                        quarter,
-                        createReportTimestamp()
-                );
+        String format =
+                selectExportFormat();
 
-        exportReportToTxt(
-                report,
-                fileName
-        );
+        if (format == null) {
+            return;
+        }
+
+        String timestamp =
+                createReportTimestamp();
+
+        if (format.equals("TXT")) {
+
+            String fileName =
+                    String.format(
+                            "system_report_quarterly_%04d_Q%d_%s.txt",
+                            year,
+                            quarter,
+                            timestamp
+                    );
+
+            exportReportToTxt(
+                    report,
+                    fileName
+            );
+
+        } else {
+
+            String fileName =
+                    String.format(
+                            "system_report_quarterly_%04d_Q%d_%s.pdf",
+                            year,
+                            quarter,
+                            timestamp
+                    );
+
+            String title =
+                    String.format(
+                            "Smart Metro Ticketing System - %04d Q%d Report",
+                            year,
+                            quarter
+                    );
+
+            exportReportToPdf(
+                    report,
+                    title,
+                    fileName
+            );
+        }
     }
 
     /**
-     * Exports yearly report to TXT.
+     * Exports yearly report.
      */
-    private static void exportYearlyReportToTxt() {
+    private static void exportYearlyReport() {
 
         clearScreen();
 
@@ -1711,21 +1791,122 @@ public class Main {
                         year
                 );
 
-        String fileName =
-                String.format(
-                        "system_report_yearly_%04d_%s.txt",
-                        year,
-                        createReportTimestamp()
-                );
+        String format =
+                selectExportFormat();
 
-        exportReportToTxt(
-                report,
-                fileName
-        );
+        if (format == null) {
+            return;
+        }
+
+        String timestamp =
+                createReportTimestamp();
+
+        if (format.equals("TXT")) {
+
+            String fileName =
+                    String.format(
+                            "system_report_yearly_%04d_%s.txt",
+                            year,
+                            timestamp
+                    );
+
+            exportReportToTxt(
+                    report,
+                    fileName
+            );
+
+        } else {
+
+            String fileName =
+                    String.format(
+                            "system_report_yearly_%04d_%s.pdf",
+                            year,
+                            timestamp
+                    );
+
+            String title =
+                    String.format(
+                            "Smart Metro Ticketing System - %04d Yearly Report",
+                            year
+                    );
+
+            exportReportToPdf(
+                    report,
+                    title,
+                    fileName
+            );
+        }
     }
 
     /**
-     * Writes a report through TXTFileManager.
+     * Allows Admin to select export format.
+     */
+    private static String selectExportFormat() {
+
+        while (true) {
+
+            clearScreen();
+
+            System.out.println(
+                    "========================================"
+            );
+
+            System.out.println(
+                    "            EXPORT FORMAT"
+            );
+
+            System.out.println(
+                    "========================================"
+            );
+
+            System.out.println(
+                    "1. TXT"
+            );
+
+            System.out.println(
+                    "2. PDF"
+            );
+
+            System.out.println();
+
+            System.out.println(
+                    "[X] Back"
+            );
+
+            System.out.println(
+                    "========================================"
+            );
+
+            System.out.print(
+                    "Enter choice: "
+            );
+
+            String choice =
+                    scanner.nextLine()
+                            .trim();
+
+            switch (choice) {
+
+                case "1":
+                    return "TXT";
+
+                case "2":
+                    return "PDF";
+
+                case "X":
+                case "x":
+                    return null;
+
+                default:
+                    showMessage(
+                            "Invalid export format."
+                    );
+            }
+        }
+    }
+
+    /**
+     * Exports report using TXTFileManager.
      */
     private static void exportReportToTxt(
             ArrayList<String> report,
@@ -1734,7 +1915,7 @@ public class Main {
         clearScreen();
 
         String reportFile =
-                "src/main/resources/data/"
+                REPORT_DIRECTORY
                         + fileName;
 
         boolean saved =
@@ -1747,7 +1928,7 @@ public class Main {
         if (saved) {
 
             System.out.println(
-                    "Report exported successfully."
+                    "TXT report exported successfully."
             );
 
             System.out.println();
@@ -1765,7 +1946,54 @@ public class Main {
     }
 
     /**
-     * Creates a unique report timestamp.
+     * Exports report as PDF.
+     */
+    private static void exportReportToPdf(
+            ArrayList<String> report,
+            String reportTitle,
+            String fileName) {
+
+        clearScreen();
+
+        String reportFile =
+                REPORT_DIRECTORY
+                        + fileName;
+
+        try {
+
+            pdfReportExporter.exportReport(
+                    report,
+                    reportTitle,
+                    reportFile
+            );
+
+            System.out.println(
+                    "PDF report exported successfully."
+            );
+
+            System.out.println();
+
+            System.out.println(
+                    "File:"
+            );
+
+            System.out.println(
+                    reportFile
+            );
+
+        } catch (FileProcessingException e) {
+
+            System.out.println(
+                    "Unable to export PDF report: "
+                            + e.getMessage()
+            );
+        }
+
+        waitForBack();
+    }
+
+    /**
+     * Creates unique report file timestamp.
      */
     private static String createReportTimestamp() {
 
@@ -1776,7 +2004,7 @@ public class Main {
     }
 
     /**
-     * Reads and validates a year.
+     * Reads year.
      */
     private static Integer readYear(
             String prompt) {
@@ -1823,7 +2051,7 @@ public class Main {
     }
 
     /**
-     * Reads and validates a month.
+     * Reads month.
      */
     private static Integer readMonth(
             String prompt) {
@@ -1870,7 +2098,7 @@ public class Main {
     }
 
     /**
-     * Reads and validates a quarter.
+     * Reads quarter.
      */
     private static Integer readQuarter(
             String prompt) {
@@ -2000,7 +2228,7 @@ public class Main {
     }
 
     /**
-     * Admin Station Management menu.
+     * Station Management menu.
      */
     private static void manageStations(
             Admin admin) {
@@ -2085,7 +2313,7 @@ public class Main {
     }
 
     /**
-     * Allows Admin to add a Station.
+     * Adds Station.
      */
     private static void addStationByAdmin(
             Admin admin) {
@@ -2228,7 +2456,7 @@ public class Main {
     }
 
     /**
-     * Admin Station search.
+     * Searches Station.
      */
     private static void searchStationByAdmin() {
 
@@ -2295,7 +2523,7 @@ public class Main {
     }
 
     /**
-     * Admin Train Management menu.
+     * Train Management menu.
      */
     private static void manageTrains(
             Admin admin) {
@@ -2372,7 +2600,7 @@ public class Main {
     }
 
     /**
-     * Allows Admin to add a Train.
+     * Adds Train.
      */
     private static void addTrainByAdmin(
             Admin admin) {
@@ -2530,7 +2758,7 @@ public class Main {
     }
 
     /**
-     * Admin Route Management menu.
+     * Route Management menu.
      */
     private static void manageRoutes() {
 
@@ -2612,7 +2840,7 @@ public class Main {
     }
 
     /**
-     * Creates a Route using existing Stations.
+     * Creates Route.
      */
     private static void createRouteByAdmin() {
 
@@ -2810,7 +3038,7 @@ public class Main {
     }
 
     /**
-     * Finds a Route using Stations.
+     * Finds Route.
      */
     private static void findRouteByAdmin() {
 
@@ -2913,7 +3141,7 @@ public class Main {
     }
 
     /**
-     * Admin User Management menu.
+     * User Management menu.
      */
     private static void manageUsers() {
 
@@ -2995,7 +3223,7 @@ public class Main {
     }
 
     /**
-     * Displays registered Users.
+     * Displays Users.
      */
     private static void viewUsersByAdmin() {
 
@@ -3007,7 +3235,7 @@ public class Main {
     }
 
     /**
-     * Admin creates a Passenger.
+     * Admin creates Passenger.
      */
     private static void addPassengerByAdmin() {
 
@@ -3176,7 +3404,7 @@ public class Main {
     }
 
     /**
-     * Displays Passenger menu.
+     * Passenger menu display.
      */
     private static void displayPassengerMenu(
             Passenger passenger) {
@@ -3245,7 +3473,7 @@ public class Main {
     }
 
     /**
-     * Displays Passenger profile.
+     * Passenger profile.
      */
     private static void viewPassengerProfile(
             Passenger passenger) {
@@ -3267,7 +3495,7 @@ public class Main {
     }
 
     /**
-     * Passenger wallet top-up.
+     * Passenger top-up.
      */
     private static void topUpBalance(
             Passenger passenger) {
@@ -3352,6 +3580,12 @@ public class Main {
 
     /**
      * Passenger Ticket purchasing workflow.
+     *
+     * Route and Ticket Type are selected first.
+     * Fare is calculated.
+     * Payment is processed.
+     * Only after successful payment is
+     * the Ticket issued and stored.
      */
     private static void buyTicket(
             Passenger passenger) {
@@ -3444,10 +3678,12 @@ public class Main {
 
         System.out.println(
                 "Route       : "
-                        + selectedRoute.getSource()
+                        + selectedRoute
+                        .getSource()
                         .getName()
                         + " -> "
-                        + selectedRoute.getDestination()
+                        + selectedRoute
+                        .getDestination()
                         .getName()
         );
 
@@ -3510,8 +3746,8 @@ public class Main {
         }
 
         /*
-         * Real-life order:
-         * payment must succeed before Ticket issue.
+         * Payment must succeed before
+         * Ticket creation.
          */
         boolean paymentSuccessful =
                 paymentService.processPayment(
@@ -3622,8 +3858,7 @@ public class Main {
 
                 if (sameRoute
                         && sameType
-                        && exactDuplicate
-                        == null) {
+                        && exactDuplicate == null) {
 
                     exactDuplicate =
                             ticket;
@@ -3692,10 +3927,12 @@ public class Main {
 
         System.out.println(
                 "Route       : "
-                        + selectedRoute.getSource()
+                        + selectedRoute
+                        .getSource()
                         .getName()
                         + " -> "
-                        + selectedRoute.getDestination()
+                        + selectedRoute
+                        .getDestination()
                         .getName()
         );
 
@@ -3940,7 +4177,7 @@ public class Main {
     }
 
     /**
-     * Selects Ticket type.
+     * Ticket type selection.
      */
     private static TicketType selectTicketType() {
 
@@ -4006,7 +4243,7 @@ public class Main {
     }
 
     /**
-     * Selects Payment implementation.
+     * Payment method selection.
      */
     private static Payment selectPaymentMethod() {
 
@@ -4097,7 +4334,7 @@ public class Main {
     }
 
     /**
-     * Displays logged-in Passenger Tickets.
+     * Displays Passenger Tickets.
      */
     private static void viewPassengerTickets(
             Passenger passenger) {
@@ -4141,7 +4378,7 @@ public class Main {
     }
 
     /**
-     * Displays Main menu.
+     * Main menu.
      */
     private static void displayMainMenu() {
 
@@ -4177,7 +4414,7 @@ public class Main {
     }
 
     /**
-     * Displays a message.
+     * Displays message and waits for X.
      */
     private static void showMessage(
             String message) {
@@ -4192,7 +4429,7 @@ public class Main {
     }
 
     /**
-     * Waits for X.
+     * Waits for X before returning.
      */
     private static void waitForBack() {
 
@@ -4221,7 +4458,7 @@ public class Main {
     }
 
     /**
-     * Clears the visible console.
+     * Clears console screen.
      */
     private static void clearScreen() {
 

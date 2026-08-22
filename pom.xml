@@ -24,6 +24,13 @@
             <version>2.21.5</version>
         </dependency>
 
+        <!-- Bonus PDF report export -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>3.0.8</version>
+        </dependency>
+
     </dependencies>
 
 </project>
