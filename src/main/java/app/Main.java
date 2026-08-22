@@ -696,8 +696,8 @@ public class Main {
                     break;
 
                 case "6":
-                    showMessage(
-                            "Reports will be connected next."
+                    viewReportsByAdmin(
+                            admin
                     );
                     break;
 
@@ -788,6 +788,39 @@ public class Main {
         System.out.println();
 
         admin.viewProfile();
+
+        waitForBack();
+    }
+
+    /**
+     * Displays the lecturer-required Admin reports.
+     *
+     * Main calls Admin.viewReports() so the program
+     * demonstrates the class relationship shown in
+     * the lecturer's Class Diagram.
+     */
+    private static void viewReportsByAdmin(
+            Admin admin) {
+
+        clearScreen();
+
+        System.out.println(
+                "========== ADMIN REPORTS =========="
+        );
+
+        System.out.println();
+
+        try {
+
+            admin.viewReports();
+
+        } catch (IllegalStateException e) {
+
+            System.out.println(
+                    "Unable to display reports: "
+                            + e.getMessage()
+            );
+        }
 
         waitForBack();
     }
