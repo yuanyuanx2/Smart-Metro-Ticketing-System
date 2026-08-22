@@ -8,6 +8,7 @@ import exception.InvalidLoginException;
 import exception.TicketNotFoundException;
 import fare.FareCalculator;
 import fare.StandardFareCalculator;
+import model.Admin;
 import model.Passenger;
 import model.Route;
 import model.Station;
@@ -19,6 +20,7 @@ import payment.CashPayment;
 import payment.Payment;
 import repository.TXTFileManager;
 import service.PaymentService;
+import service.ReportService;
 import service.RouteService;
 import service.StationService;
 import service.TicketService;
@@ -55,7 +57,7 @@ public class Main {
     /*
      * Shared TXTFileManager.
      *
-     * Using one instance preserves object relationships
+     * One shared instance preserves the relationships
      * between loaded Passengers, Stations, Routes and Tickets.
      */
     private static final TXTFileManager fileManager =
@@ -81,11 +83,12 @@ public class Main {
     private static TrainService trainService;
     private static RouteService routeService;
     private static TicketService ticketService;
+    private static ReportService reportService;
 
     public static void main(String[] args) {
 
         /*
-         * Required loading relationship/order:
+         * Important startup relationship/load order:
          *
          * 1. Users
          * 2. Stations
@@ -99,7 +102,25 @@ public class Main {
         loadRoutes();
         loadTickets();
 
-        boolean running = true;
+        /*
+         * Reports use the same live Ticket collection.
+         */
+        reportService =
+                new ReportService(
+                        tickets
+                );
+
+        /*
+         * Admin accounts restored from TXT were created using
+         * the persistence constructor.
+         *
+         * Reconnect them to the live shared services now that
+         * those services have been fully created.
+         */
+        connectAdminServices();
+
+        boolean running =
+                true;
 
         while (running) {
 
@@ -386,6 +407,51 @@ public class Main {
     }
 
     /**
+     * Reconnects persisted Admin accounts to
+     * the live shared system services.
+     */
+    private static void connectAdminServices() {
+
+        ArrayList<User> currentUsers =
+                new ArrayList<>(
+                        users.values()
+                );
+
+        for (User user : currentUsers) {
+
+            if (user.getRole()
+                    == UserRole.ADMIN) {
+
+                Admin connectedAdmin =
+                        new Admin(
+                                user.getUserId(),
+                                user.getName(),
+                                user.getEmail(),
+                                user.getPassword(),
+                                stationService,
+                                trainService,
+                                reportService
+                        );
+
+                users.put(
+                        connectedAdmin.getUserId(),
+                        connectedAdmin
+                );
+            }
+        }
+
+        /*
+         * UserService continues using the same HashMap,
+         * but recreate it explicitly for clarity after
+         * reconnecting the Admin objects.
+         */
+        userService =
+                new UserService(
+                        users
+                );
+    }
+
+    /**
      * Registers a new Passenger.
      */
     private static void registerPassenger() {
@@ -458,7 +524,7 @@ public class Main {
     }
 
     /**
-     * Handles login.
+     * Handles Passenger and Admin login.
      */
     private static void login() {
 
@@ -500,21 +566,9 @@ public class Main {
             } else if (user.getRole()
                     == UserRole.ADMIN) {
 
-                clearScreen();
-
-                System.out.println(
-                        "Login successful. Welcome, "
-                                + user.getName()
-                                + "!"
+                adminMenu(
+                        (Admin) user
                 );
-
-                System.out.println();
-
-                System.out.println(
-                        "Admin menu will be connected later."
-                );
-
-                waitForBack();
             }
 
         } catch (InvalidLoginException e) {
@@ -536,7 +590,8 @@ public class Main {
     private static void passengerMenu(
             Passenger passenger) {
 
-        boolean loggedIn = true;
+        boolean loggedIn =
+                true;
 
         while (loggedIn) {
 
@@ -601,6 +656,157 @@ public class Main {
                     );
             }
         }
+    }
+
+    /**
+     * Admin menu foundation.
+     */
+    private static void adminMenu(
+            Admin admin) {
+
+        boolean loggedIn =
+                true;
+
+        while (loggedIn) {
+
+            displayAdminMenu(
+                    admin
+            );
+
+            System.out.print(
+                    "Enter choice: "
+            );
+
+            String choice =
+                    scanner.nextLine().trim();
+
+            switch (choice) {
+
+                case "1":
+                    viewAdminProfile(
+                            admin
+                    );
+                    break;
+
+                case "2":
+                    showMessage(
+                            "Station management will be connected next."
+                    );
+                    break;
+
+                case "3":
+                    showMessage(
+                            "Train management will be connected next."
+                    );
+                    break;
+
+                case "4":
+                    showMessage(
+                            "Route management will be connected next."
+                    );
+                    break;
+
+                case "5":
+                    showMessage(
+                            "User management will be connected next."
+                    );
+                    break;
+
+                case "6":
+                    showMessage(
+                            "Reports will be connected next."
+                    );
+                    break;
+
+                case "0":
+                    loggedIn = false;
+                    break;
+
+                default:
+                    showMessage(
+                            "Invalid choice. Please try again."
+                    );
+            }
+        }
+    }
+
+    /**
+     * Displays Admin menu.
+     */
+    private static void displayAdminMenu(
+            Admin admin) {
+
+        clearScreen();
+
+        System.out.println(
+                "========================================"
+        );
+
+        System.out.println(
+                "              ADMIN MENU"
+        );
+
+        System.out.println(
+                "========================================"
+        );
+
+        System.out.println(
+                "Welcome, "
+                        + admin.getName()
+        );
+
+        System.out.println();
+
+        System.out.println(
+                "1. View Profile"
+        );
+
+        System.out.println(
+                "2. Manage Stations"
+        );
+
+        System.out.println(
+                "3. Manage Trains"
+        );
+
+        System.out.println(
+                "4. Manage Routes"
+        );
+
+        System.out.println(
+                "5. Manage Users"
+        );
+
+        System.out.println(
+                "6. Reports"
+        );
+
+        System.out.println(
+                "0. Logout"
+        );
+
+        System.out.println(
+                "========================================"
+        );
+    }
+
+    /**
+     * Displays Admin profile.
+     */
+    private static void viewAdminProfile(
+            Admin admin) {
+
+        clearScreen();
+
+        System.out.println(
+                "========== ADMIN PROFILE =========="
+        );
+
+        System.out.println();
+
+        admin.viewProfile();
+
+        waitForBack();
     }
 
     /**
@@ -778,18 +984,7 @@ public class Main {
     }
 
     /**
-     * Passenger ticket purchasing workflow.
-     *
-     * Route
-     * -> Ticket Type
-     * -> Fare
-     * -> Active Ticket Warning
-     * -> Balance Check
-     * -> Payment
-     * -> Ticket Creation
-     *
-     * Ticket creation occurs only after
-     * successful payment.
+     * Passenger Ticket purchasing workflow.
      */
     private static void buyTicket(
             Passenger passenger) {
@@ -946,10 +1141,6 @@ public class Main {
             return;
         }
 
-        /*
-         * Payment must succeed before
-         * Ticket creation.
-         */
         boolean paymentSuccessful =
                 paymentService.processPayment(
                         payment,
@@ -1023,7 +1214,7 @@ public class Main {
     }
 
     /**
-     * Warns Passenger when ACTIVE ticket(s)
+     * Warns Passenger when ACTIVE Ticket(s)
      * already exist.
      */
     private static boolean confirmActiveTicketWarning(
@@ -1031,7 +1222,8 @@ public class Main {
             Route selectedRoute,
             TicketType selectedTicketType) {
 
-        int activeTicketCount = 0;
+        int activeTicketCount =
+                0;
 
         Ticket exactDuplicate =
                 null;
@@ -1167,14 +1359,6 @@ public class Main {
 
     /**
      * Passenger cancellation workflow.
-     *
-     * Only the logged-in Passenger's own Ticket
-     * can be cancelled.
-     *
-     * Only ACTIVE Tickets can be cancelled.
-     *
-     * Cancellation does not delete the Ticket.
-     * The status becomes CANCELLED.
      */
     private static void cancelPassengerTicket(
             Passenger passenger) {
@@ -1190,9 +1374,6 @@ public class Main {
         boolean activeTicketFound =
                 false;
 
-        /*
-         * Display only this Passenger's ACTIVE Tickets.
-         */
         for (Ticket ticket : tickets) {
 
             if (ticket.getPassenger()
@@ -1235,10 +1416,6 @@ public class Main {
             return;
         }
 
-        /*
-         * First verify that the Ticket belongs
-         * to the logged-in Passenger.
-         */
         Ticket selectedTicket =
                 findPassengerTicketById(
                         passenger,
@@ -1254,10 +1431,6 @@ public class Main {
             return;
         }
 
-        /*
-         * USED or already CANCELLED Tickets
-         * cannot be cancelled again.
-         */
         if (selectedTicket.getStatus()
                 != TicketStatus.ACTIVE) {
 
@@ -1318,10 +1491,6 @@ public class Main {
 
         try {
 
-            /*
-             * Use TicketService as required by
-             * the lecturer's class design.
-             */
             ticketService.cancelTicket(
                     selectedTicket.getTicketId()
             );
@@ -1362,7 +1531,7 @@ public class Main {
     }
 
     /**
-     * Finds one Ticket belonging specifically
+     * Finds a Ticket belonging specifically
      * to the logged-in Passenger.
      */
     private static Ticket findPassengerTicketById(
@@ -1535,8 +1704,8 @@ public class Main {
     }
 
     /**
-     * Displays only Tickets belonging
-     * to the logged-in Passenger.
+     * Displays only Tickets belonging to
+     * the logged-in Passenger.
      */
     private static void viewPassengerTickets(
             Passenger passenger) {
@@ -1615,7 +1784,7 @@ public class Main {
     }
 
     /**
-     * Displays message.
+     * Displays a message.
      */
     private static void showMessage(
             String message) {
