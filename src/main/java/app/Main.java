@@ -54,11 +54,12 @@ public class Main {
     private static final String TICKETS_FILE =
             "src/main/resources/data/tickets.txt";
 
-    /*
+    /**
      * Shared TXTFileManager.
      *
-     * One shared instance preserves the relationships
-     * between loaded Passengers, Stations, Routes and Tickets.
+     * One shared instance preserves relationships
+     * between loaded Passengers, Stations,
+     * Routes and Tickets.
      */
     private static final TXTFileManager fileManager =
             new TXTFileManager();
@@ -66,9 +67,17 @@ public class Main {
     private static final HashMap<String, User> users =
             new HashMap<>();
 
+    /**
+     * Shared live Route collection.
+     *
+     * Main and RouteService use the same list.
+     */
     private static final ArrayList<Route> routes =
             new ArrayList<>();
 
+    /**
+     * Shared live Ticket collection.
+     */
     private static final ArrayList<Ticket> tickets =
             new ArrayList<>();
 
@@ -111,8 +120,8 @@ public class Main {
                 );
 
         /*
-         * Reconnect persisted Admin accounts to
-         * the shared live services.
+         * Reconnect persisted Admin accounts
+         * to shared live services.
          */
         connectAdminServices();
 
@@ -161,7 +170,7 @@ public class Main {
     }
 
     /**
-     * Loads users from TXT storage.
+     * Loads Users from TXT storage.
      */
     private static void loadUsers() {
 
@@ -174,7 +183,8 @@ public class Main {
                             USERS_FILE
                     );
 
-            if (loadedData instanceof ArrayList<?> loadedUsers) {
+            if (loadedData
+                    instanceof ArrayList<?> loadedUsers) {
 
                 for (Object item : loadedUsers) {
 
@@ -211,7 +221,7 @@ public class Main {
     }
 
     /**
-     * Loads stations from TXT storage.
+     * Loads Stations from TXT storage.
      */
     private static void loadStations() {
 
@@ -225,7 +235,8 @@ public class Main {
                             STATIONS_FILE
                     );
 
-            if (loadedData instanceof ArrayList<?> loadedStations) {
+            if (loadedData
+                    instanceof ArrayList<?> loadedStations) {
 
                 for (Object item : loadedStations) {
 
@@ -258,7 +269,7 @@ public class Main {
     }
 
     /**
-     * Loads trains from TXT storage.
+     * Loads Trains from TXT storage.
      */
     private static void loadTrains() {
 
@@ -272,7 +283,8 @@ public class Main {
                             TRAINS_FILE
                     );
 
-            if (loadedData instanceof ArrayList<?> loadedTrains) {
+            if (loadedData
+                    instanceof ArrayList<?> loadedTrains) {
 
                 for (Object item : loadedTrains) {
 
@@ -303,14 +315,19 @@ public class Main {
     }
 
     /**
-     * Loads routes from TXT storage.
+     * Loads Routes from TXT storage.
+     *
+     * RouteService and Main share the exact
+     * same ArrayList<Route>.
      */
     private static void loadRoutes() {
 
         routes.clear();
 
         routeService =
-                new RouteService();
+                new RouteService(
+                        routes
+                );
 
         try {
 
@@ -319,15 +336,12 @@ public class Main {
                             ROUTES_FILE
                     );
 
-            if (loadedData instanceof ArrayList<?> loadedRoutes) {
+            if (loadedData
+                    instanceof ArrayList<?> loadedRoutes) {
 
                 for (Object item : loadedRoutes) {
 
                     if (item instanceof Route route) {
-
-                        routes.add(
-                                route
-                        );
 
                         routeService.addRoute(
                                 route
@@ -354,7 +368,7 @@ public class Main {
     }
 
     /**
-     * Loads tickets from TXT storage.
+     * Loads Tickets from TXT storage.
      */
     private static void loadTickets() {
 
@@ -367,7 +381,8 @@ public class Main {
                             TICKETS_FILE
                     );
 
-            if (loadedData instanceof ArrayList<?> loadedTickets) {
+            if (loadedData
+                    instanceof ArrayList<?> loadedTickets) {
 
                 for (Object item : loadedTickets) {
 
@@ -404,8 +419,8 @@ public class Main {
     }
 
     /**
-     * Reconnects persisted Admin accounts to
-     * the shared live services.
+     * Reconnects persisted Admin accounts
+     * to the shared live services.
      */
     private static void connectAdminServices() {
 
@@ -693,9 +708,7 @@ public class Main {
                     break;
 
                 case "4":
-                    showMessage(
-                            "Route management will be connected next."
-                    );
+                    manageRoutes();
                     break;
 
                 case "5":
@@ -1026,7 +1039,7 @@ public class Main {
     }
 
     /**
-     * Admin searches for a Station by name.
+     * Allows Admin to search Station by name.
      */
     private static void searchStationByAdmin() {
 
@@ -1169,9 +1182,6 @@ public class Main {
 
     /**
      * Allows Admin to add a Train.
-     *
-     * Uses Admin.addTrain() so the lecturer-required
-     * relationship is preserved.
      */
     private static void addTrainByAdmin(
             Admin admin) {
@@ -1215,9 +1225,6 @@ public class Main {
         String capacityInput =
                 scanner.nextLine().trim();
 
-        /*
-         * Required fields.
-         */
         if (trainId.isBlank()
                 || trainName.isBlank()
                 || capacityInput.isBlank()) {
@@ -1229,9 +1236,6 @@ public class Main {
             return;
         }
 
-        /*
-         * TXT persistence delimiter protection.
-         */
         if (trainId.contains("|")
                 || trainName.contains("|")
                 || capacityInput.contains("|")) {
@@ -1279,9 +1283,6 @@ public class Main {
 
         try {
 
-            /*
-             * Lecturer-required Admin.addTrain().
-             */
             admin.addTrain(
                     train
             );
@@ -1330,6 +1331,396 @@ public class Main {
         System.out.println();
 
         trainService.viewTrains();
+
+        waitForBack();
+    }
+
+    /**
+     * Admin Route Management menu.
+     */
+    private static void manageRoutes() {
+
+        boolean managingRoutes =
+                true;
+
+        while (managingRoutes) {
+
+            clearScreen();
+
+            System.out.println(
+                    "========================================"
+            );
+
+            System.out.println(
+                    "           ROUTE MANAGEMENT"
+            );
+
+            System.out.println(
+                    "========================================"
+            );
+
+            System.out.println(
+                    "1. Create Route"
+            );
+
+            System.out.println(
+                    "2. View Routes"
+            );
+
+            System.out.println(
+                    "3. Find Route"
+            );
+
+            System.out.println();
+
+            System.out.println(
+                    "[X] Back"
+            );
+
+            System.out.println(
+                    "========================================"
+            );
+
+            System.out.print(
+                    "Enter choice: "
+            );
+
+            String choice =
+                    scanner.nextLine().trim();
+
+            switch (choice) {
+
+                case "1":
+                    createRouteByAdmin();
+                    break;
+
+                case "2":
+                    viewRoutes();
+                    break;
+
+                case "3":
+                    findRouteByAdmin();
+                    break;
+
+                case "X":
+                case "x":
+                    managingRoutes =
+                            false;
+                    break;
+
+                default:
+                    showMessage(
+                            "Invalid choice. Please try again."
+                    );
+            }
+        }
+    }
+
+    /**
+     * Allows Admin to create a Route using
+     * existing Station objects.
+     */
+    private static void createRouteByAdmin() {
+
+        clearScreen();
+
+        System.out.println(
+                "========== CREATE ROUTE =========="
+        );
+
+        System.out.println();
+
+        System.out.println(
+                "Available Stations:"
+        );
+
+        System.out.println();
+
+        stationService.viewStations();
+
+        System.out.println();
+
+        System.out.println(
+                "[X] Back"
+        );
+
+        System.out.println();
+
+        System.out.print(
+                "Route ID: "
+        );
+
+        String routeId =
+                scanner.nextLine().trim();
+
+        if (routeId.equalsIgnoreCase("X")) {
+            return;
+        }
+
+        if (routeId.isBlank()) {
+
+            showMessage(
+                    "Route creation failed: Route ID cannot be blank."
+            );
+
+            return;
+        }
+
+        if (routeId.contains("|")) {
+
+            showMessage(
+                    "Route creation failed: Character | is not allowed."
+            );
+
+            return;
+        }
+
+        System.out.print(
+                "Source Station Name: "
+        );
+
+        String sourceName =
+                scanner.nextLine().trim();
+
+        if (sourceName.equalsIgnoreCase("X")) {
+            return;
+        }
+
+        Station source =
+                stationService.searchStation(
+                        sourceName
+                );
+
+        if (source == null) {
+
+            showMessage(
+                    "Route creation failed: Source station not found."
+            );
+
+            return;
+        }
+
+        System.out.print(
+                "Destination Station Name: "
+        );
+
+        String destinationName =
+                scanner.nextLine().trim();
+
+        if (destinationName.equalsIgnoreCase("X")) {
+            return;
+        }
+
+        Station destination =
+                stationService.searchStation(
+                        destinationName
+                );
+
+        if (destination == null) {
+
+            showMessage(
+                    "Route creation failed: Destination station not found."
+            );
+
+            return;
+        }
+
+        /*
+         * A real Route cannot start and end
+         * at the exact same Station.
+         */
+        if (source == destination) {
+
+            showMessage(
+                    "Route creation failed: Source and destination must be different."
+            );
+
+            return;
+        }
+
+        System.out.print(
+                "Distance (km): "
+        );
+
+        String distanceInput =
+                scanner.nextLine().trim();
+
+        double distanceKm;
+
+        try {
+
+            distanceKm =
+                    Double.parseDouble(
+                            distanceInput
+                    );
+
+        } catch (NumberFormatException e) {
+
+            showMessage(
+                    "Route creation failed: Distance must be a valid number."
+            );
+
+            return;
+        }
+
+        if (distanceKm <= 0) {
+
+            showMessage(
+                    "Route creation failed: Distance must be greater than 0."
+            );
+
+            return;
+        }
+
+        Route route =
+                new Route(
+                        routeId,
+                        source,
+                        destination,
+                        distanceKm
+                );
+
+        try {
+
+            /*
+             * RouteService.addRoute() is the
+             * lecturer-required relationship.
+             *
+             * Because RouteService shares Main's
+             * routes ArrayList, Passenger buying
+             * sees this Route immediately.
+             */
+            routeService.addRoute(
+                    route
+            );
+
+            clearScreen();
+
+            System.out.println(
+                    "========== ROUTE CREATED =========="
+            );
+
+            System.out.println();
+
+            System.out.println(
+                    "Route created successfully."
+            );
+
+            System.out.println();
+
+            route.displayRoute();
+
+        } catch (IllegalArgumentException e) {
+
+            clearScreen();
+
+            System.out.println(
+                    "Unable to create route: "
+                            + e.getMessage()
+            );
+        }
+
+        waitForBack();
+    }
+
+    /**
+     * Demonstrates lecturer-required
+     * RouteService.findRoute().
+     */
+    private static void findRouteByAdmin() {
+
+        clearScreen();
+
+        System.out.println(
+                "========== FIND ROUTE =========="
+        );
+
+        System.out.println();
+
+        stationService.viewStations();
+
+        System.out.println();
+
+        System.out.println(
+                "[X] Back"
+        );
+
+        System.out.println();
+
+        System.out.print(
+                "Source Station Name: "
+        );
+
+        String sourceName =
+                scanner.nextLine().trim();
+
+        if (sourceName.equalsIgnoreCase("X")) {
+            return;
+        }
+
+        Station source =
+                stationService.searchStation(
+                        sourceName
+                );
+
+        if (source == null) {
+
+            showMessage(
+                    "Source station not found."
+            );
+
+            return;
+        }
+
+        System.out.print(
+                "Destination Station Name: "
+        );
+
+        String destinationName =
+                scanner.nextLine().trim();
+
+        if (destinationName.equalsIgnoreCase("X")) {
+            return;
+        }
+
+        Station destination =
+                stationService.searchStation(
+                        destinationName
+                );
+
+        if (destination == null) {
+
+            showMessage(
+                    "Destination station not found."
+            );
+
+            return;
+        }
+
+        Route route =
+                routeService.findRoute(
+                        source,
+                        destination
+                );
+
+        clearScreen();
+
+        if (route == null) {
+
+            System.out.println(
+                    "Route not found."
+            );
+
+        } else {
+
+            System.out.println(
+                    "========== ROUTE FOUND =========="
+            );
+
+            System.out.println();
+
+            route.displayRoute();
+        }
 
         waitForBack();
     }
@@ -2056,7 +2447,7 @@ public class Main {
     }
 
     /**
-     * Finds a Ticket belonging specifically
+     * Finds one Ticket belonging specifically
      * to the logged-in Passenger.
      */
     private static Ticket findPassengerTicketById(
@@ -2211,7 +2602,7 @@ public class Main {
     }
 
     /**
-     * Finds Route by ID.
+     * Finds Route using Route ID.
      */
     private static Route findRouteById(
             String routeId) {
@@ -2219,7 +2610,9 @@ public class Main {
         for (Route route : routes) {
 
             if (route.getRouteId()
-                    .equalsIgnoreCase(routeId)) {
+                    .equalsIgnoreCase(
+                            routeId
+                    )) {
 
                 return route;
             }
@@ -2324,7 +2717,7 @@ public class Main {
     }
 
     /**
-     * Waits for X.
+     * Waits until X is entered.
      */
     private static void waitForBack() {
 
