@@ -54,28 +54,26 @@ public class Main {
     private static final String TICKETS_FILE =
             "src/main/resources/data/tickets.txt";
 
-    /**
-     * Shared TXTFileManager.
-     *
-     * One shared instance preserves relationships
-     * between loaded Passengers, Stations,
-     * Routes and Tickets.
+    /*
+     * One shared TXTFileManager preserves
+     * loaded object relationships.
      */
     private static final TXTFileManager fileManager =
             new TXTFileManager();
 
+    /*
+     * Shared live User collection.
+     */
     private static final HashMap<String, User> users =
             new HashMap<>();
 
-    /**
+    /*
      * Shared live Route collection.
-     *
-     * Main and RouteService use the same list.
      */
     private static final ArrayList<Route> routes =
             new ArrayList<>();
 
-    /**
+    /*
      * Shared live Ticket collection.
      */
     private static final ArrayList<Ticket> tickets =
@@ -97,7 +95,7 @@ public class Main {
     public static void main(String[] args) {
 
         /*
-         * Important startup relationship/load order:
+         * Required startup relationship order:
          *
          * 1. Users
          * 2. Stations
@@ -112,29 +110,24 @@ public class Main {
         loadTickets();
 
         /*
-         * Reports use the same live Ticket collection.
+         * Reports share the live Ticket collection.
          */
         reportService =
-                new ReportService(
-                        tickets
-                );
+                new ReportService(tickets);
 
         /*
-         * Reconnect persisted Admin accounts
-         * to shared live services.
+         * Connect loaded Admin accounts to
+         * the live system services.
          */
         connectAdminServices();
 
-        boolean running =
-                true;
+        boolean running = true;
 
         while (running) {
 
             displayMainMenu();
 
-            System.out.print(
-                    "Enter choice: "
-            );
+            System.out.print("Enter choice: ");
 
             String choice =
                     scanner.nextLine().trim();
@@ -183,8 +176,7 @@ public class Main {
                             USERS_FILE
                     );
 
-            if (loadedData
-                    instanceof ArrayList<?> loadedUsers) {
+            if (loadedData instanceof ArrayList<?> loadedUsers) {
 
                 for (Object item : loadedUsers) {
 
@@ -215,9 +207,7 @@ public class Main {
         }
 
         userService =
-                new UserService(
-                        users
-                );
+                new UserService(users);
     }
 
     /**
@@ -235,8 +225,7 @@ public class Main {
                             STATIONS_FILE
                     );
 
-            if (loadedData
-                    instanceof ArrayList<?> loadedStations) {
+            if (loadedData instanceof ArrayList<?> loadedStations) {
 
                 for (Object item : loadedStations) {
 
@@ -283,8 +272,7 @@ public class Main {
                             TRAINS_FILE
                     );
 
-            if (loadedData
-                    instanceof ArrayList<?> loadedTrains) {
+            if (loadedData instanceof ArrayList<?> loadedTrains) {
 
                 for (Object item : loadedTrains) {
 
@@ -317,17 +305,15 @@ public class Main {
     /**
      * Loads Routes from TXT storage.
      *
-     * RouteService and Main share the exact
-     * same ArrayList<Route>.
+     * Main and RouteService use the same
+     * live ArrayList<Route>.
      */
     private static void loadRoutes() {
 
         routes.clear();
 
         routeService =
-                new RouteService(
-                        routes
-                );
+                new RouteService(routes);
 
         try {
 
@@ -336,8 +322,7 @@ public class Main {
                             ROUTES_FILE
                     );
 
-            if (loadedData
-                    instanceof ArrayList<?> loadedRoutes) {
+            if (loadedData instanceof ArrayList<?> loadedRoutes) {
 
                 for (Object item : loadedRoutes) {
 
@@ -381,8 +366,7 @@ public class Main {
                             TICKETS_FILE
                     );
 
-            if (loadedData
-                    instanceof ArrayList<?> loadedTickets) {
+            if (loadedData instanceof ArrayList<?> loadedTickets) {
 
                 for (Object item : loadedTickets) {
 
@@ -420,7 +404,7 @@ public class Main {
 
     /**
      * Reconnects persisted Admin accounts
-     * to the shared live services.
+     * to the shared system services.
      */
     private static void connectAdminServices() {
 
@@ -431,8 +415,7 @@ public class Main {
 
         for (User user : currentUsers) {
 
-            if (user.getRole()
-                    == UserRole.ADMIN) {
+            if (user.getRole() == UserRole.ADMIN) {
 
                 Admin connectedAdmin =
                         new Admin(
@@ -453,13 +436,12 @@ public class Main {
         }
 
         userService =
-                new UserService(
-                        users
-                );
+                new UserService(users);
     }
 
     /**
-     * Registers a new Passenger.
+     * Public registration creates
+     * Passenger accounts only.
      */
     private static void registerPassenger() {
 
@@ -597,8 +579,7 @@ public class Main {
     private static void passengerMenu(
             Passenger passenger) {
 
-        boolean loggedIn =
-                true;
+        boolean loggedIn = true;
 
         while (loggedIn) {
 
@@ -671,8 +652,7 @@ public class Main {
     private static void adminMenu(
             Admin admin) {
 
-        boolean loggedIn =
-                true;
+        boolean loggedIn = true;
 
         while (loggedIn) {
 
@@ -712,9 +692,7 @@ public class Main {
                     break;
 
                 case "5":
-                    showMessage(
-                            "User management will be connected next."
-                    );
+                    manageUsers();
                     break;
 
                 case "6":
@@ -820,8 +798,7 @@ public class Main {
     private static void manageStations(
             Admin admin) {
 
-        boolean managingStations =
-                true;
+        boolean managingStations = true;
 
         while (managingStations) {
 
@@ -886,8 +863,7 @@ public class Main {
 
                 case "X":
                 case "x":
-                    managingStations =
-                            false;
+                    managingStations = false;
                     break;
 
                 default:
@@ -1039,7 +1015,7 @@ public class Main {
     }
 
     /**
-     * Allows Admin to search Station by name.
+     * Allows Admin to search Stations.
      */
     private static void searchStationByAdmin() {
 
@@ -1110,8 +1086,7 @@ public class Main {
     private static void manageTrains(
             Admin admin) {
 
-        boolean managingTrains =
-                true;
+        boolean managingTrains = true;
 
         while (managingTrains) {
 
@@ -1168,8 +1143,7 @@ public class Main {
 
                 case "X":
                 case "x":
-                    managingTrains =
-                            false;
+                    managingTrains = false;
                     break;
 
                 default:
@@ -1340,8 +1314,7 @@ public class Main {
      */
     private static void manageRoutes() {
 
-        boolean managingRoutes =
-                true;
+        boolean managingRoutes = true;
 
         while (managingRoutes) {
 
@@ -1404,8 +1377,7 @@ public class Main {
 
                 case "X":
                 case "x":
-                    managingRoutes =
-                            false;
+                    managingRoutes = false;
                     break;
 
                 default:
@@ -1417,8 +1389,7 @@ public class Main {
     }
 
     /**
-     * Allows Admin to create a Route using
-     * existing Station objects.
+     * Creates a Route using existing Station objects.
      */
     private static void createRouteByAdmin() {
 
@@ -1525,10 +1496,6 @@ public class Main {
             return;
         }
 
-        /*
-         * A real Route cannot start and end
-         * at the exact same Station.
-         */
         if (source == destination) {
 
             showMessage(
@@ -1582,14 +1549,6 @@ public class Main {
 
         try {
 
-            /*
-             * RouteService.addRoute() is the
-             * lecturer-required relationship.
-             *
-             * Because RouteService shares Main's
-             * routes ArrayList, Passenger buying
-             * sees this Route immediately.
-             */
             routeService.addRoute(
                     route
             );
@@ -1624,8 +1583,7 @@ public class Main {
     }
 
     /**
-     * Demonstrates lecturer-required
-     * RouteService.findRoute().
+     * Demonstrates RouteService.findRoute().
      */
     private static void findRouteByAdmin() {
 
@@ -1721,6 +1679,273 @@ public class Main {
 
             route.displayRoute();
         }
+
+        waitForBack();
+    }
+
+    /**
+     * Admin User Management menu.
+     *
+     * Uses lecturer-required UserService
+     * rather than adding user management
+     * methods into Admin.
+     */
+    private static void manageUsers() {
+
+        boolean managingUsers = true;
+
+        while (managingUsers) {
+
+            clearScreen();
+
+            System.out.println(
+                    "========================================"
+            );
+
+            System.out.println(
+                    "            USER MANAGEMENT"
+            );
+
+            System.out.println(
+                    "========================================"
+            );
+
+            System.out.println(
+                    "1. View Users"
+            );
+
+            System.out.println(
+                    "2. Add Passenger"
+            );
+
+            System.out.println(
+                    "3. Add Admin"
+            );
+
+            System.out.println();
+
+            System.out.println(
+                    "[X] Back"
+            );
+
+            System.out.println(
+                    "========================================"
+            );
+
+            System.out.print(
+                    "Enter choice: "
+            );
+
+            String choice =
+                    scanner.nextLine().trim();
+
+            switch (choice) {
+
+                case "1":
+                    viewUsersByAdmin();
+                    break;
+
+                case "2":
+                    addPassengerByAdmin();
+                    break;
+
+                case "3":
+                    addAdminByAdmin();
+                    break;
+
+                case "X":
+                case "x":
+                    managingUsers = false;
+                    break;
+
+                default:
+                    showMessage(
+                            "Invalid choice. Please try again."
+                    );
+            }
+        }
+    }
+
+    /**
+     * Displays all registered Users.
+     */
+    private static void viewUsersByAdmin() {
+
+        clearScreen();
+
+        userService.viewAllUsers();
+
+        waitForBack();
+    }
+
+    /**
+     * Allows an authenticated Admin
+     * to create a Passenger account.
+     */
+    private static void addPassengerByAdmin() {
+
+        clearScreen();
+
+        System.out.println(
+                "========== ADD PASSENGER =========="
+        );
+
+        System.out.println();
+
+        System.out.println(
+                "[X] Back"
+        );
+
+        System.out.println();
+
+        System.out.print(
+                "Passenger ID: "
+        );
+
+        String userId =
+                scanner.nextLine().trim();
+
+        if (userId.equalsIgnoreCase("X")) {
+            return;
+        }
+
+        System.out.print(
+                "Name: "
+        );
+
+        String name =
+                scanner.nextLine().trim();
+
+        System.out.print(
+                "Email: "
+        );
+
+        String email =
+                scanner.nextLine().trim();
+
+        System.out.print(
+                "Password: "
+        );
+
+        String password =
+                scanner.nextLine();
+
+        if (userId.isBlank()
+                || name.isBlank()
+                || email.isBlank()
+                || password.isBlank()) {
+
+            showMessage(
+                    "Registration failed: All fields are required."
+            );
+
+            return;
+        }
+
+        Passenger passenger =
+                new Passenger(
+                        userId,
+                        name,
+                        email,
+                        password
+                );
+
+        clearScreen();
+
+        userService.registerUser(
+                passenger
+        );
+
+        waitForBack();
+    }
+
+    /**
+     * Allows an authenticated Admin
+     * to create another Admin account.
+     *
+     * The new Admin is immediately connected
+     * to the live Station, Train and Report services.
+     */
+    private static void addAdminByAdmin() {
+
+        clearScreen();
+
+        System.out.println(
+                "========== ADD ADMIN =========="
+        );
+
+        System.out.println();
+
+        System.out.println(
+                "[X] Back"
+        );
+
+        System.out.println();
+
+        System.out.print(
+                "Admin ID: "
+        );
+
+        String userId =
+                scanner.nextLine().trim();
+
+        if (userId.equalsIgnoreCase("X")) {
+            return;
+        }
+
+        System.out.print(
+                "Name: "
+        );
+
+        String name =
+                scanner.nextLine().trim();
+
+        System.out.print(
+                "Email: "
+        );
+
+        String email =
+                scanner.nextLine().trim();
+
+        System.out.print(
+                "Password: "
+        );
+
+        String password =
+                scanner.nextLine();
+
+        if (userId.isBlank()
+                || name.isBlank()
+                || email.isBlank()
+                || password.isBlank()) {
+
+            showMessage(
+                    "Registration failed: All fields are required."
+            );
+
+            return;
+        }
+
+        /*
+         * Create a fully connected Admin so
+         * the account works immediately without restart.
+         */
+        Admin newAdmin =
+                new Admin(
+                        userId,
+                        name,
+                        email,
+                        password,
+                        stationService,
+                        trainService,
+                        reportService
+                );
+
+        clearScreen();
+
+        userService.registerUser(
+                newAdmin
+        );
 
         waitForBack();
     }
@@ -1992,13 +2217,9 @@ public class Main {
 
         System.out.println(
                 "Route       : "
-                        + selectedRoute
-                        .getSource()
-                        .getName()
+                        + selectedRoute.getSource().getName()
                         + " -> "
-                        + selectedRoute
-                        .getDestination()
-                        .getName()
+                        + selectedRoute.getDestination().getName()
         );
 
         System.out.println(
@@ -2018,8 +2239,7 @@ public class Main {
 
         System.out.println();
 
-        if (passenger.getBalance()
-                < fare) {
+        if (passenger.getBalance() < fare) {
 
             System.out.println(
                     "Insufficient balance."
@@ -2138,16 +2358,13 @@ public class Main {
             Route selectedRoute,
             TicketType selectedTicketType) {
 
-        int activeTicketCount =
-                0;
+        int activeTicketCount = 0;
 
-        Ticket exactDuplicate =
-                null;
+        Ticket exactDuplicate = null;
 
         for (Ticket ticket : tickets) {
 
-            if (ticket.getPassenger()
-                    == passenger
+            if (ticket.getPassenger() == passenger
                     && ticket.getStatus()
                     == TicketStatus.ACTIVE) {
 
@@ -2234,13 +2451,9 @@ public class Main {
 
         System.out.println(
                 "Route       : "
-                        + selectedRoute
-                        .getSource()
-                        .getName()
+                        + selectedRoute.getSource().getName()
                         + " -> "
-                        + selectedRoute
-                        .getDestination()
-                        .getName()
+                        + selectedRoute.getDestination().getName()
         );
 
         System.out.println(
@@ -2287,13 +2500,11 @@ public class Main {
 
         System.out.println();
 
-        boolean activeTicketFound =
-                false;
+        boolean activeTicketFound = false;
 
         for (Ticket ticket : tickets) {
 
-            if (ticket.getPassenger()
-                    == passenger
+            if (ticket.getPassenger() == passenger
                     && ticket.getStatus()
                     == TicketStatus.ACTIVE) {
 
@@ -2303,8 +2514,7 @@ public class Main {
                         "-------------------------"
                 );
 
-                activeTicketFound =
-                        true;
+                activeTicketFound = true;
             }
         }
 
@@ -2447,8 +2657,8 @@ public class Main {
     }
 
     /**
-     * Finds one Ticket belonging specifically
-     * to the logged-in Passenger.
+     * Finds a Ticket belonging to
+     * the logged-in Passenger.
      */
     private static Ticket findPassengerTicketById(
             Passenger passenger,
@@ -2456,8 +2666,7 @@ public class Main {
 
         for (Ticket ticket : tickets) {
 
-            if (ticket.getPassenger()
-                    == passenger
+            if (ticket.getPassenger() == passenger
                     && ticket.getTicketId()
                     .equalsIgnoreCase(ticketId)) {
 
@@ -2602,7 +2811,7 @@ public class Main {
     }
 
     /**
-     * Finds Route using Route ID.
+     * Finds Route by ID.
      */
     private static Route findRouteById(
             String routeId) {
@@ -2610,9 +2819,7 @@ public class Main {
         for (Route route : routes) {
 
             if (route.getRouteId()
-                    .equalsIgnoreCase(
-                            routeId
-                    )) {
+                    .equalsIgnoreCase(routeId)) {
 
                 return route;
             }
@@ -2622,7 +2829,7 @@ public class Main {
     }
 
     /**
-     * Displays only Tickets belonging to
+     * Displays Tickets belonging to
      * the logged-in Passenger.
      */
     private static void viewPassengerTickets(
@@ -2636,8 +2843,7 @@ public class Main {
 
         System.out.println();
 
-        boolean found =
-                false;
+        boolean found = false;
 
         for (Ticket ticket : tickets) {
 
@@ -2650,8 +2856,7 @@ public class Main {
                         "-------------------------"
                 );
 
-                found =
-                        true;
+                found = true;
             }
         }
 
@@ -2717,7 +2922,7 @@ public class Main {
     }
 
     /**
-     * Waits until X is entered.
+     * Waits for X.
      */
     private static void waitForBack() {
 
@@ -2743,7 +2948,7 @@ public class Main {
     }
 
     /**
-     * Clears visible console.
+     * Clears the visible console.
      */
     private static void clearScreen() {
 
