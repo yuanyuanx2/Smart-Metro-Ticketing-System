@@ -21,7 +21,8 @@ public class TicketService {
     /**
      * Creates a ticket service with an empty ticket list.
      */
-    public TicketService(FareCalculator fareCalculator) {
+    public TicketService(
+            FareCalculator fareCalculator) {
 
         this(
                 fareCalculator,
@@ -40,17 +41,26 @@ public class TicketService {
             FareCalculator fareCalculator,
             ArrayList<Ticket> tickets) {
 
-        this.fareCalculator = fareCalculator;
+        this.fareCalculator =
+                fareCalculator;
 
         if (tickets == null) {
-            this.tickets = new ArrayList<>();
+
+            this.tickets =
+                    new ArrayList<>();
+
         } else {
-            this.tickets = tickets;
+
+            this.tickets =
+                    tickets;
         }
     }
 
     /**
-     * Creates and stores a new ticket for a passenger.
+     * Lecturer-required standard ticket purchase method.
+     *
+     * The normal fare is calculated using
+     * FareCalculator and no loyalty discount is applied.
      */
     public Ticket buyTicket(
             Passenger passenger,
@@ -62,6 +72,60 @@ public class TicketService {
                         route,
                         type
                 );
+
+        return buyTicket(
+                passenger,
+                route,
+                type,
+                fare,
+                false
+        );
+    }
+
+    /**
+     * Bonus-feature overload.
+     *
+     * Creates a Ticket using the actual final fare
+     * that was successfully paid by the Passenger.
+     *
+     * This allows a loyalty-discounted fare to be
+     * stored correctly without changing the lecturer's
+     * required FareCalculator interface.
+     */
+    public Ticket buyTicket(
+            Passenger passenger,
+            Route route,
+            TicketType type,
+            double finalFare,
+            boolean loyaltyDiscountApplied) {
+
+        if (passenger == null) {
+
+            throw new IllegalArgumentException(
+                    "Passenger cannot be null."
+            );
+        }
+
+        if (route == null) {
+
+            throw new IllegalArgumentException(
+                    "Route cannot be null."
+            );
+        }
+
+        if (type == null) {
+
+            throw new IllegalArgumentException(
+                    "Ticket type cannot be null."
+            );
+        }
+
+        if (finalFare < 0) {
+
+            throw new IllegalArgumentException(
+                    "Ticket fare cannot be negative."
+            );
+        }
 
         String ticketId =
                 String.format(
@@ -77,14 +141,15 @@ public class TicketService {
                         route.getDestination(),
                         type,
                         TicketStatus.ACTIVE,
-                        fare
+                        finalFare,
+                        null,
+                        loyaltyDiscountApplied
                 );
 
         /*
-         * Existing ticket-purchase behaviour.
-         *
-         * Payment sequencing will be integrated
-         * separately in a later checkpoint.
+         * Passenger.buyTicket() performs the
+         * wallet-balance check and deducts the
+         * Ticket's actual final fare.
          */
         passenger.buyTicket(
                 ticket
@@ -104,7 +169,8 @@ public class TicketService {
             String ticketId)
             throws TicketNotFoundException {
 
-        for (Ticket ticket : tickets) {
+        for (Ticket ticket :
+                tickets) {
 
             if (ticket.getTicketId()
                     .equals(ticketId)) {
@@ -122,7 +188,8 @@ public class TicketService {
     }
 
     /**
-     * Displays all tickets currently stored in the system.
+     * Displays all tickets currently stored
+     * in the system.
      */
     public void viewTickets() {
 
@@ -135,7 +202,8 @@ public class TicketService {
             return;
         }
 
-        for (Ticket ticket : tickets) {
+        for (Ticket ticket :
+                tickets) {
 
             ticket.printTicket();
 

@@ -18,6 +18,13 @@ public class Ticket {
 
     private LocalDateTime purchaseDateTime;
 
+    /*
+     * Bonus feature:
+     * Records whether the one-time loyalty
+     * discount was used for this Ticket.
+     */
+    private boolean loyaltyDiscountApplied;
+
     private static final DateTimeFormatter DATE_FORMAT =
             DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
@@ -26,8 +33,10 @@ public class Ticket {
 
     /**
      * Original constructor.
-     * New Tickets automatically receive the
-     * current purchase date and time.
+     *
+     * New standard Tickets automatically receive
+     * the current purchase date/time and do not
+     * use a loyalty discount.
      */
     public Ticket(
             String ticketId,
@@ -46,13 +55,17 @@ public class Ticket {
                 ticketType,
                 status,
                 fare,
-                LocalDateTime.now()
+                LocalDateTime.now(),
+                false
         );
     }
 
     /**
-     * Constructor used when restoring a Ticket
-     * from TXT storage.
+     * Existing constructor used when restoring
+     * older Ticket records from storage.
+     *
+     * Older records are treated as having no
+     * loyalty discount.
      */
     public Ticket(
             String ticketId,
@@ -63,6 +76,34 @@ public class Ticket {
             TicketStatus status,
             double fare,
             LocalDateTime purchaseDateTime) {
+
+        this(
+                ticketId,
+                passenger,
+                source,
+                destination,
+                ticketType,
+                status,
+                fare,
+                purchaseDateTime,
+                false
+        );
+    }
+
+    /**
+     * Full constructor used for Tickets that may
+     * contain loyalty-discount information.
+     */
+    public Ticket(
+            String ticketId,
+            Passenger passenger,
+            Station source,
+            Station destination,
+            TicketType ticketType,
+            TicketStatus status,
+            double fare,
+            LocalDateTime purchaseDateTime,
+            boolean loyaltyDiscountApplied) {
 
         this.ticketId =
                 ticketId;
@@ -95,6 +136,9 @@ public class Ticket {
             this.purchaseDateTime =
                     purchaseDateTime;
         }
+
+        this.loyaltyDiscountApplied =
+                loyaltyDiscountApplied;
     }
 
     public String getTicketId() {
@@ -127,6 +171,15 @@ public class Ticket {
 
     public LocalDateTime getPurchaseDateTime() {
         return purchaseDateTime;
+    }
+
+    /**
+     * Returns true when the one-time
+     * loyalty discount was used.
+     */
+    public boolean isLoyaltyDiscountApplied() {
+
+        return loyaltyDiscountApplied;
     }
 
     /**
@@ -168,6 +221,13 @@ public class Ticket {
                 "Fare           : RM%.2f%n",
                 fare
         );
+
+        if (loyaltyDiscountApplied) {
+
+            System.out.println(
+                    "Loyalty Reward : 20% Discount Applied"
+            );
+        }
 
         System.out.println(
                 "Purchase Date  : "
