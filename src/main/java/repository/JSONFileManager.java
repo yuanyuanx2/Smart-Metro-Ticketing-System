@@ -144,9 +144,6 @@ public class JSONFileManager implements FileManager {
                                     .toFile()
                     );
 
-            /*
-             * Empty JSON file.
-             */
             if (root == null) {
                 return data;
             }
@@ -191,7 +188,8 @@ public class JSONFileManager implements FileManager {
         ObjectNode json =
                 objectMapper.createObjectNode();
 
-        if (item instanceof Passenger passenger) {
+        if (item
+                instanceof Passenger passenger) {
 
             json.put(
                     "recordType",
@@ -226,7 +224,8 @@ public class JSONFileManager implements FileManager {
             return json;
         }
 
-        if (item instanceof Admin admin) {
+        if (item
+                instanceof Admin admin) {
 
             json.put(
                     "recordType",
@@ -256,7 +255,8 @@ public class JSONFileManager implements FileManager {
             return json;
         }
 
-        if (item instanceof Station station) {
+        if (item
+                instanceof Station station) {
 
             json.put(
                     "recordType",
@@ -281,7 +281,8 @@ public class JSONFileManager implements FileManager {
             return json;
         }
 
-        if (item instanceof Train train) {
+        if (item
+                instanceof Train train) {
 
             json.put(
                     "recordType",
@@ -306,7 +307,8 @@ public class JSONFileManager implements FileManager {
             return json;
         }
 
-        if (item instanceof Route route) {
+        if (item
+                instanceof Route route) {
 
             json.put(
                     "recordType",
@@ -338,7 +340,8 @@ public class JSONFileManager implements FileManager {
             return json;
         }
 
-        if (item instanceof Ticket ticket) {
+        if (item
+                instanceof Ticket ticket) {
 
             json.put(
                     "recordType",
@@ -389,6 +392,14 @@ public class JSONFileManager implements FileManager {
                     "purchaseDateTime",
                     ticket.getPurchaseDateTime()
                             .toString()
+            );
+
+            /*
+             * Bonus loyalty-discount information.
+             */
+            json.put(
+                    "loyaltyDiscountApplied",
+                    ticket.isLoyaltyDiscountApplied()
             );
 
             return json;
@@ -743,6 +754,18 @@ public class JSONFileManager implements FileManager {
                             )
                     );
 
+            /*
+             * Old JSON backups do not contain
+             * this field, so false is used as
+             * the backward-compatible default.
+             */
+            boolean loyaltyDiscountApplied =
+                    getOptionalBoolean(
+                            json,
+                            "loyaltyDiscountApplied",
+                            false
+                    );
+
             return new Ticket(
                     getRequiredText(
                             json,
@@ -757,7 +780,8 @@ public class JSONFileManager implements FileManager {
                             json,
                             "fare"
                     ),
-                    purchaseDateTime
+                    purchaseDateTime,
+                    loyaltyDiscountApplied
             );
 
         } catch (IllegalArgumentException
@@ -845,5 +869,40 @@ public class JSONFileManager implements FileManager {
         }
 
         return value.asDouble();
+    }
+
+    /**
+     * Reads an optional boolean property.
+     *
+     * This is used for backward compatibility
+     * with JSON files created before the
+     * loyalty-discount feature existed.
+     */
+    private boolean getOptionalBoolean(
+            JsonNode json,
+            String fieldName,
+            boolean defaultValue)
+            throws FileProcessingException {
+
+        JsonNode value =
+                json.get(
+                        fieldName
+                );
+
+        if (value == null
+                || value.isNull()) {
+
+            return defaultValue;
+        }
+
+        if (!value.isBoolean()) {
+
+            throw new FileProcessingException(
+                    "Invalid JSON field: "
+                            + fieldName
+            );
+        }
+
+        return value.asBoolean();
     }
 }

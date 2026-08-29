@@ -37,32 +37,49 @@ public class TXTFileManager implements FileManager {
             throws FileProcessingException {
 
         try (BufferedWriter writer =
-                     new BufferedWriter(new FileWriter(fileName))) {
+                     new BufferedWriter(
+                             new FileWriter(fileName)
+                     )) {
 
             if (data instanceof Map<?, ?> map) {
 
-                for (Object item : map.values()) {
-                    writer.write(convertToText(item));
+                for (Object item :
+                        map.values()) {
+
+                    writer.write(
+                            convertToText(item)
+                    );
+
                     writer.newLine();
                 }
 
-            } else if (data instanceof Iterable<?> collection) {
+            } else if (data
+                    instanceof Iterable<?> collection) {
 
-                for (Object item : collection) {
-                    writer.write(convertToText(item));
+                for (Object item :
+                        collection) {
+
+                    writer.write(
+                            convertToText(item)
+                    );
+
                     writer.newLine();
                 }
 
             } else {
 
-                writer.write(convertToText(data));
+                writer.write(
+                        convertToText(data)
+                );
+
                 writer.newLine();
             }
 
         } catch (IOException e) {
 
             throw new FileProcessingException(
-                    "Unable to save data to file: " + fileName
+                    "Unable to save data to file: "
+                            + fileName
             );
         }
     }
@@ -71,21 +88,29 @@ public class TXTFileManager implements FileManager {
     public Object loadData(String fileName)
             throws FileProcessingException {
 
-        ArrayList<Object> data = new ArrayList<>();
+        ArrayList<Object> data =
+                new ArrayList<>();
 
         try (BufferedReader reader =
-                     new BufferedReader(new FileReader(fileName))) {
+                     new BufferedReader(
+                             new FileReader(fileName)
+                     )) {
 
             String line;
 
-            while ((line = reader.readLine()) != null) {
-                data.add(convertFromText(line));
+            while ((line =
+                    reader.readLine()) != null) {
+
+                data.add(
+                        convertFromText(line)
+                );
             }
 
         } catch (IOException e) {
 
             throw new FileProcessingException(
-                    "Unable to load data from file: " + fileName
+                    "Unable to load data from file: "
+                            + fileName
             );
         }
 
@@ -93,69 +118,105 @@ public class TXTFileManager implements FileManager {
     }
 
     /**
-     * Converts supported Java objects into TXT records.
+     * Converts supported Java objects
+     * into TXT records.
      */
     private String convertToText(Object item)
             throws FileProcessingException {
 
-        if (item instanceof Passenger passenger) {
+        if (item
+                instanceof Passenger passenger) {
 
             return "PASSENGER|"
-                    + passenger.getUserId() + "|"
-                    + passenger.getName() + "|"
-                    + passenger.getEmail() + "|"
-                    + passenger.getPassword() + "|"
+                    + passenger.getUserId()
+                    + "|"
+                    + passenger.getName()
+                    + "|"
+                    + passenger.getEmail()
+                    + "|"
+                    + passenger.getPassword()
+                    + "|"
                     + passenger.getBalance();
         }
 
-        if (item instanceof Admin admin) {
+        if (item
+                instanceof Admin admin) {
 
             return "ADMIN|"
-                    + admin.getUserId() + "|"
-                    + admin.getName() + "|"
-                    + admin.getEmail() + "|"
+                    + admin.getUserId()
+                    + "|"
+                    + admin.getName()
+                    + "|"
+                    + admin.getEmail()
+                    + "|"
                     + admin.getPassword();
         }
 
-        if (item instanceof Station station) {
+        if (item
+                instanceof Station station) {
 
             return "STATION|"
-                    + station.getStationId() + "|"
-                    + station.getName() + "|"
+                    + station.getStationId()
+                    + "|"
+                    + station.getName()
+                    + "|"
                     + station.getLocation();
         }
 
-        if (item instanceof Train train) {
+        if (item
+                instanceof Train train) {
 
             return "TRAIN|"
-                    + train.getTrainId() + "|"
-                    + train.getTrainName() + "|"
+                    + train.getTrainId()
+                    + "|"
+                    + train.getTrainName()
+                    + "|"
                     + train.getCapacity();
         }
 
-        if (item instanceof Route route) {
+        if (item
+                instanceof Route route) {
 
             return "ROUTE|"
-                    + route.getRouteId() + "|"
-                    + route.getSource().getStationId() + "|"
-                    + route.getDestination().getStationId() + "|"
+                    + route.getRouteId()
+                    + "|"
+                    + route.getSource()
+                    .getStationId()
+                    + "|"
+                    + route.getDestination()
+                    .getStationId()
+                    + "|"
                     + route.calculateDistance();
         }
 
-        if (item instanceof Ticket ticket) {
+        if (item
+                instanceof Ticket ticket) {
 
             return "TICKET|"
-                    + ticket.getTicketId() + "|"
-                    + ticket.getPassenger().getUserId() + "|"
-                    + ticket.getSource().getStationId() + "|"
-                    + ticket.getDestination().getStationId() + "|"
-                    + ticket.getTicketType() + "|"
-                    + ticket.getStatus() + "|"
-                    + ticket.getFare() + "|"
-                    + ticket.getPurchaseDateTime();
+                    + ticket.getTicketId()
+                    + "|"
+                    + ticket.getPassenger()
+                    .getUserId()
+                    + "|"
+                    + ticket.getSource()
+                    .getStationId()
+                    + "|"
+                    + ticket.getDestination()
+                    .getStationId()
+                    + "|"
+                    + ticket.getTicketType()
+                    + "|"
+                    + ticket.getStatus()
+                    + "|"
+                    + ticket.getFare()
+                    + "|"
+                    + ticket.getPurchaseDateTime()
+                    + "|"
+                    + ticket.isLoyaltyDiscountApplied();
         }
 
         if (item instanceof String text) {
+
             return text;
         }
 
@@ -165,25 +226,34 @@ public class TXTFileManager implements FileManager {
     }
 
     /**
-     * Converts TXT records back into Java objects.
+     * Converts TXT records back into
+     * Java objects.
      */
     private Object convertFromText(String line)
             throws FileProcessingException {
 
         if (line.startsWith("PASSENGER|")) {
 
-            String[] parts = line.split("\\|", -1);
+            String[] parts =
+                    line.split(
+                            "\\|",
+                            -1
+                    );
 
             if (parts.length != 6) {
+
                 throw new FileProcessingException(
-                        "Invalid passenger data: " + line
+                        "Invalid passenger data: "
+                                + line
                 );
             }
 
             try {
 
                 double balance =
-                        Double.parseDouble(parts[5]);
+                        Double.parseDouble(
+                                parts[5]
+                        );
 
                 Passenger passenger =
                         new Passenger(
@@ -204,18 +274,25 @@ public class TXTFileManager implements FileManager {
             } catch (NumberFormatException e) {
 
                 throw new FileProcessingException(
-                        "Invalid passenger balance: " + line
+                        "Invalid passenger balance: "
+                                + line
                 );
             }
         }
 
         if (line.startsWith("ADMIN|")) {
 
-            String[] parts = line.split("\\|", -1);
+            String[] parts =
+                    line.split(
+                            "\\|",
+                            -1
+                    );
 
             if (parts.length != 5) {
+
                 throw new FileProcessingException(
-                        "Invalid admin data: " + line
+                        "Invalid admin data: "
+                                + line
                 );
             }
 
@@ -229,11 +306,17 @@ public class TXTFileManager implements FileManager {
 
         if (line.startsWith("STATION|")) {
 
-            String[] parts = line.split("\\|", -1);
+            String[] parts =
+                    line.split(
+                            "\\|",
+                            -1
+                    );
 
             if (parts.length != 4) {
+
                 throw new FileProcessingException(
-                        "Invalid station data: " + line
+                        "Invalid station data: "
+                                + line
                 );
             }
 
@@ -254,18 +337,26 @@ public class TXTFileManager implements FileManager {
 
         if (line.startsWith("TRAIN|")) {
 
-            String[] parts = line.split("\\|", -1);
+            String[] parts =
+                    line.split(
+                            "\\|",
+                            -1
+                    );
 
             if (parts.length != 4) {
+
                 throw new FileProcessingException(
-                        "Invalid train data: " + line
+                        "Invalid train data: "
+                                + line
                 );
             }
 
             try {
 
                 int capacity =
-                        Integer.parseInt(parts[3]);
+                        Integer.parseInt(
+                                parts[3]
+                        );
 
                 return new Train(
                         parts[1],
@@ -276,31 +367,44 @@ public class TXTFileManager implements FileManager {
             } catch (NumberFormatException e) {
 
                 throw new FileProcessingException(
-                        "Invalid train capacity: " + line
+                        "Invalid train capacity: "
+                                + line
                 );
             }
         }
 
         if (line.startsWith("ROUTE|")) {
 
-            String[] parts = line.split("\\|", -1);
+            String[] parts =
+                    line.split(
+                            "\\|",
+                            -1
+                    );
 
             if (parts.length != 5) {
+
                 throw new FileProcessingException(
-                        "Invalid route data: " + line
+                        "Invalid route data: "
+                                + line
                 );
             }
 
             Station source =
-                    stationLookup.get(parts[2]);
+                    stationLookup.get(
+                            parts[2]
+                    );
 
             Station destination =
-                    stationLookup.get(parts[3]);
+                    stationLookup.get(
+                            parts[3]
+                    );
 
-            if (source == null || destination == null) {
+            if (source == null
+                    || destination == null) {
 
                 throw new FileProcessingException(
-                        "Route refers to a station that has not been loaded: "
+                        "Route refers to a station "
+                                + "that has not been loaded: "
                                 + line
                 );
             }
@@ -308,7 +412,9 @@ public class TXTFileManager implements FileManager {
             try {
 
                 double distanceKm =
-                        Double.parseDouble(parts[4]);
+                        Double.parseDouble(
+                                parts[4]
+                        );
 
                 return new Route(
                         parts[1],
@@ -320,40 +426,69 @@ public class TXTFileManager implements FileManager {
             } catch (NumberFormatException e) {
 
                 throw new FileProcessingException(
-                        "Invalid route distance: " + line
+                        "Invalid route distance: "
+                                + line
                 );
             }
         }
 
         if (line.startsWith("TICKET|")) {
 
-            String[] parts = line.split("\\|", -1);
+            String[] parts =
+                    line.split(
+                            "\\|",
+                            -1
+                    );
 
-            if (parts.length != 9) {
+            /*
+             * Backward compatibility:
+             *
+             * Old Ticket:
+             * 9 fields
+             *
+             * New Ticket:
+             * 10 fields including
+             * loyaltyDiscountApplied.
+             */
+            if (parts.length != 9
+                    && parts.length != 10) {
+
                 throw new FileProcessingException(
-                        "Invalid ticket data: " + line
-                );
-            }
-
-            Passenger passenger =
-                    passengerLookup.get(parts[2]);
-
-            Station source =
-                    stationLookup.get(parts[3]);
-
-            Station destination =
-                    stationLookup.get(parts[4]);
-
-            if (passenger == null) {
-                throw new FileProcessingException(
-                        "Ticket refers to a passenger that has not been loaded: "
+                        "Invalid ticket data: "
                                 + line
                 );
             }
 
-            if (source == null || destination == null) {
+            Passenger passenger =
+                    passengerLookup.get(
+                            parts[2]
+                    );
+
+            Station source =
+                    stationLookup.get(
+                            parts[3]
+                    );
+
+            Station destination =
+                    stationLookup.get(
+                            parts[4]
+                    );
+
+            if (passenger == null) {
+
                 throw new FileProcessingException(
-                        "Ticket refers to a station that has not been loaded: "
+                        "Ticket refers to a passenger "
+                                + "that has not been loaded: "
+                                + line
+                );
+            }
+
+            if (source == null
+                    || destination == null) {
+
+                throw new FileProcessingException(
+                        "Ticket refers to a station "
+                                + "that has not been loaded: "
                                 + line
                 );
             }
@@ -361,16 +496,50 @@ public class TXTFileManager implements FileManager {
             try {
 
                 TicketType ticketType =
-                        TicketType.valueOf(parts[5]);
+                        TicketType.valueOf(
+                                parts[5]
+                        );
 
                 TicketStatus status =
-                        TicketStatus.valueOf(parts[6]);
+                        TicketStatus.valueOf(
+                                parts[6]
+                        );
 
                 double fare =
-                        Double.parseDouble(parts[7]);
+                        Double.parseDouble(
+                                parts[7]
+                        );
 
                 LocalDateTime purchaseDateTime =
-                        LocalDateTime.parse(parts[8]);
+                        LocalDateTime.parse(
+                                parts[8]
+                        );
+
+                boolean loyaltyDiscountApplied =
+                        false;
+
+                /*
+                 * Old 9-field records automatically
+                 * receive false.
+                 */
+                if (parts.length == 10) {
+
+                    if (!parts[9]
+                            .equalsIgnoreCase("true")
+                            && !parts[9]
+                            .equalsIgnoreCase("false")) {
+
+                        throw new FileProcessingException(
+                                "Invalid loyalty discount value: "
+                                        + line
+                        );
+                    }
+
+                    loyaltyDiscountApplied =
+                            Boolean.parseBoolean(
+                                    parts[9]
+                            );
+                }
 
                 return new Ticket(
                         parts[1],
@@ -380,14 +549,23 @@ public class TXTFileManager implements FileManager {
                         ticketType,
                         status,
                         fare,
-                        purchaseDateTime
+                        purchaseDateTime,
+                        loyaltyDiscountApplied
                 );
 
-            } catch (IllegalArgumentException |
-                     DateTimeParseException e) {
+            } catch (NumberFormatException
+                     | DateTimeParseException e) {
 
                 throw new FileProcessingException(
-                        "Invalid ticket data: " + line
+                        "Invalid ticket data: "
+                                + line
+                );
+
+            } catch (IllegalArgumentException e) {
+
+                throw new FileProcessingException(
+                        "Invalid ticket data: "
+                                + line
                 );
             }
         }
