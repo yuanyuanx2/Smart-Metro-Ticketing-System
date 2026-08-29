@@ -1,2 +1,3 @@
 PASSENGER|P001|Ali|ali@email.com|pass123|75.5
+PASSENGER|P002|John Ling|john@email.com|pass123|50.0
 ADMIN|A001|Metro Admin|admin@email.com|admin123
