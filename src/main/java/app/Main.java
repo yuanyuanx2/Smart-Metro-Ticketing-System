@@ -29,6 +29,7 @@ import service.RouteService;
 import service.StationService;
 import service.TicketService;
 import service.TrainService;
+import service.TravelHistoryService;
 import service.UserService;
 
 import java.time.LocalDateTime;
@@ -108,6 +109,18 @@ public class Main {
      */
     private static final LoyaltyDiscountService loyaltyDiscountService =
             new LoyaltyDiscountService(
+                    tickets
+            );
+
+    /*
+     * Bonus passenger travel-history service.
+     *
+     * Uses the same live Ticket collection so
+     * history automatically reflects loaded,
+     * purchased, and cancelled Tickets.
+     */
+    private static final TravelHistoryService travelHistoryService =
+            new TravelHistoryService(
                     tickets
             );
 
@@ -776,6 +789,12 @@ public class Main {
                     break;
 
                 case "7":
+                    managePassengerTravelHistory(
+                            passenger
+                    );
+                    break;
+
+                case "8":
                     cancelPassengerTicket(
                             passenger
                     );
@@ -3478,7 +3497,11 @@ public class Main {
         );
 
         System.out.println(
-                "7. Cancel Ticket"
+                "7. Travel History"
+        );
+
+        System.out.println(
+                "8. Cancel Ticket"
         );
 
         System.out.println(
@@ -4523,6 +4546,210 @@ public class Main {
 
             System.out.println(
                     "No tickets found for this passenger."
+            );
+        }
+
+        waitForBack();
+    }
+
+    /**
+     * Bonus Passenger Travel History menu.
+     */
+    private static void managePassengerTravelHistory(
+            Passenger passenger) {
+
+        boolean viewingHistory =
+                true;
+
+        while (viewingHistory) {
+
+            clearScreen();
+
+            System.out.println(
+                    "========================================"
+            );
+
+            System.out.println(
+                    "            TRAVEL HISTORY"
+            );
+
+            System.out.println(
+                    "========================================"
+            );
+
+            System.out.println(
+                    "1. Current Month"
+            );
+
+            System.out.println(
+                    "2. Select Month"
+            );
+
+            System.out.println(
+                    "3. All-Time History"
+            );
+
+            System.out.println();
+
+            System.out.println(
+                    "[X] Back"
+            );
+
+            System.out.println(
+                    "========================================"
+            );
+
+            System.out.print(
+                    "Enter choice: "
+            );
+
+            String choice =
+                    scanner.nextLine()
+                            .trim();
+
+            switch (choice) {
+
+                case "1":
+                    viewCurrentMonthTravelHistory(
+                            passenger
+                    );
+                    break;
+
+                case "2":
+                    viewSelectedMonthTravelHistory(
+                            passenger
+                    );
+                    break;
+
+                case "3":
+                    viewAllTimeTravelHistory(
+                            passenger
+                    );
+                    break;
+
+                case "X":
+                case "x":
+                    viewingHistory =
+                            false;
+                    break;
+
+                default:
+                    showMessage(
+                            "Invalid choice. Please try again."
+                    );
+            }
+        }
+    }
+
+    /**
+     * Displays the Passenger's current-month
+     * travel history.
+     */
+    private static void viewCurrentMonthTravelHistory(
+            Passenger passenger) {
+
+        clearScreen();
+
+        try {
+
+            travelHistoryService
+                    .showCurrentMonthHistory(
+                            passenger
+                    );
+
+        } catch (IllegalArgumentException e) {
+
+            System.out.println(
+                    "Unable to display travel history: "
+                            + e.getMessage()
+            );
+        }
+
+        waitForBack();
+    }
+
+    /**
+     * Allows the Passenger to choose a year
+     * and month for travel-history viewing.
+     */
+    private static void viewSelectedMonthTravelHistory(
+            Passenger passenger) {
+
+        clearScreen();
+
+        System.out.println(
+                "========== SELECT TRAVEL HISTORY PERIOD =========="
+        );
+
+        System.out.println();
+
+        System.out.println(
+                "[X] Back"
+        );
+
+        System.out.println();
+
+        Integer year =
+                readYear(
+                        "Enter year: "
+                );
+
+        if (year == null) {
+            return;
+        }
+
+        Integer month =
+                readMonth(
+                        "Enter month (1-12): "
+                );
+
+        if (month == null) {
+            return;
+        }
+
+        clearScreen();
+
+        try {
+
+            travelHistoryService
+                    .showMonthlyHistory(
+                            passenger,
+                            year,
+                            month
+                    );
+
+        } catch (IllegalArgumentException e) {
+
+            System.out.println(
+                    "Unable to display travel history: "
+                            + e.getMessage()
+            );
+        }
+
+        waitForBack();
+    }
+
+    /**
+     * Displays all available non-deleted
+     * purchase history for the Passenger.
+     */
+    private static void viewAllTimeTravelHistory(
+            Passenger passenger) {
+
+        clearScreen();
+
+        try {
+
+            travelHistoryService
+                    .showAllTimeHistory(
+                            passenger
+                    );
+
+        } catch (IllegalArgumentException e) {
+
+            System.out.println(
+                    "Unable to display travel history: "
+                            + e.getMessage()
             );
         }
 
