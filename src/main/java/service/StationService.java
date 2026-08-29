@@ -16,7 +16,9 @@ public class StationService {
      * Creates an empty station list.
      */
     public StationService() {
-        stations = new ArrayList<>();
+
+        stations =
+                new ArrayList<>();
     }
 
     /**
@@ -24,7 +26,8 @@ public class StationService {
      *
      * Station IDs and names must be unique.
      */
-    public void addStation(Station station) {
+    public void addStation(
+            Station station) {
 
         if (station == null) {
 
@@ -33,9 +36,11 @@ public class StationService {
             );
         }
 
-        for (Station existingStation : stations) {
+        for (Station existingStation :
+                stations) {
 
-            if (existingStation.getStationId()
+            if (existingStation
+                    .getStationId()
                     .equalsIgnoreCase(
                             station.getStationId()
                     )) {
@@ -46,7 +51,8 @@ public class StationService {
                 );
             }
 
-            if (existingStation.getName()
+            if (existingStation
+                    .getName()
                     .equalsIgnoreCase(
                             station.getName()
                     )) {
@@ -66,14 +72,19 @@ public class StationService {
     /**
      * Searches for a Station by name.
      *
-     * @return matching Station, or null if not found
+     * @return matching Station,
+     * or null if not found
      */
-    public Station searchStation(String name) {
+    public Station searchStation(
+            String name) {
 
-        for (Station station : stations) {
+        for (Station station :
+                stations) {
 
             if (station.getName()
-                    .equalsIgnoreCase(name)) {
+                    .equalsIgnoreCase(
+                            name
+                    )) {
 
                 return station;
             }
@@ -83,25 +94,29 @@ public class StationService {
     }
 
     /**
-     * Sorts Stations alphabetically
-     * by station name.
+     * Sorts Stations by Station ID
+     * in ascending order.
+     *
+     * Example:
+     * S001, S002, S003, S004...
      */
-    public void sortStationsByName() {
+    public void sortStationsById() {
 
-        Comparator<Station> nameComparator =
+        Comparator<Station> idComparator =
                 Comparator.comparing(
-                        Station::getName,
+                        Station::getStationId,
                         String.CASE_INSENSITIVE_ORDER
                 );
 
         stations.sort(
-                nameComparator
+                idComparator
         );
     }
 
     /**
-     * Returns a copy of the current Station list
-     * for persistence and controlled use.
+     * Returns a copy of the current
+     * Station list for persistence
+     * and controlled use.
      */
     public ArrayList<Station> getStations() {
 
@@ -124,7 +139,8 @@ public class StationService {
             return;
         }
 
-        for (Station station : stations) {
+        for (Station station :
+                stations) {
 
             station.displayInfo();
 

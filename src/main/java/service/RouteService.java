@@ -4,6 +4,7 @@ import model.Route;
 import model.Station;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 
 /**
  * Handles route management operations.
@@ -23,12 +24,8 @@ public class RouteService {
     }
 
     /**
-     * Creates a RouteService using an existing
-     * shared Route collection.
-     *
-     * This allows Main, Passenger operations,
-     * Admin operations and RouteService to use
-     * the same live Route objects.
+     * Creates a RouteService using
+     * an existing shared Route collection.
      */
     public RouteService(
             ArrayList<Route> routes) {
@@ -49,8 +46,9 @@ public class RouteService {
      * Adds a Route.
      *
      * Route ID must be unique.
-     * The same directional source-destination
-     * pair cannot be added twice.
+     * The same directional
+     * source-destination pair
+     * cannot be added twice.
      */
     public void addRoute(
             Route route) {
@@ -62,12 +60,11 @@ public class RouteService {
             );
         }
 
-        for (Route existingRoute : routes) {
+        for (Route existingRoute :
+                routes) {
 
-            /*
-             * Route ID must be unique.
-             */
-            if (existingRoute.getRouteId()
+            if (existingRoute
+                    .getRouteId()
                     .equalsIgnoreCase(
                             route.getRouteId()
                     )) {
@@ -78,13 +75,6 @@ public class RouteService {
                 );
             }
 
-            /*
-             * In this simplified metro system,
-             * one directional source-destination
-             * pair represents one Route.
-             *
-             * Reverse direction is still allowed.
-             */
             boolean sameSource =
                     existingRoute.getSource()
                             == route.getSource();
@@ -115,7 +105,8 @@ public class RouteService {
             Station source,
             Station destination) {
 
-        for (Route route : routes) {
+        for (Route route :
+                routes) {
 
             if (route.getSource()
                     .equals(source)
@@ -127,6 +118,26 @@ public class RouteService {
         }
 
         return null;
+    }
+
+    /**
+     * Sorts Routes by Route ID
+     * in ascending order.
+     *
+     * Example:
+     * R001, R002, R003, R004...
+     */
+    public void sortRoutesById() {
+
+        Comparator<Route> idComparator =
+                Comparator.comparing(
+                        Route::getRouteId,
+                        String.CASE_INSENSITIVE_ORDER
+                );
+
+        routes.sort(
+                idComparator
+        );
     }
 
     /**
@@ -143,7 +154,8 @@ public class RouteService {
             return;
         }
 
-        for (Route route : routes) {
+        for (Route route :
+                routes) {
 
             route.displayRoute();
 

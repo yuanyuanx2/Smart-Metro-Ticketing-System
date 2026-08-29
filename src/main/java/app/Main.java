@@ -380,7 +380,7 @@ public class Main {
                 }
             }
 
-            stationService.sortStationsByName();
+            stationService.sortStationsById();
 
         } catch (FileProcessingException e) {
 
@@ -480,6 +480,8 @@ public class Main {
                         );
                     }
                 }
+
+                routeService.sortRoutesById();
             }
 
         } catch (FileProcessingException e) {
@@ -2458,7 +2460,7 @@ public class Main {
                     station
             );
 
-            stationService.sortStationsByName();
+            stationService.sortStationsById();
 
             clearScreen();
 
@@ -3044,6 +3046,8 @@ public class Main {
             routeService.addRoute(
                     route
             );
+
+            routeService.sortRoutesById();
 
             clearScreen();
 
