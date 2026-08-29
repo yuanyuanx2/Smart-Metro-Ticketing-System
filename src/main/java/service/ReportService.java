@@ -2,11 +2,14 @@ package service;
 
 import enums.TicketStatus;
 import enums.TicketType;
+import model.Passenger;
 import model.Ticket;
+import model.User;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
@@ -160,6 +163,159 @@ public class ReportService {
     }
 
     /**
+     * Bonus report:
+     * displays an all-time financial summary
+     * for each Passenger.
+     *
+     * Admin accounts are excluded because they
+     * do not have wallet balances or ticket spending.
+     *
+     * Under the current system design:
+     * Total Top Up = Current Balance + Total Spent.
+     *
+     * This is valid because Passenger accounts
+     * begin with zero wallet balance, ticket purchases
+     * are the only wallet deduction, and cancelled
+     * Tickets are not refunded.
+     */
+    public void showPassengerFinancialSummary(
+            Map<String, User> users) {
+
+        System.out.println(
+                "===== PASSENGER FINANCIAL SUMMARY ====="
+        );
+
+        System.out.println();
+
+        ArrayList<Passenger> passengers =
+                getPassengers(
+                        users
+                );
+
+        if (passengers.isEmpty()) {
+
+            System.out.println(
+                    "No passenger accounts available."
+            );
+
+            return;
+        }
+
+        double systemTopUp =
+                0.00;
+
+        double systemSpent =
+                0.00;
+
+        double systemBalance =
+                0.00;
+
+        for (Passenger passenger :
+                passengers) {
+
+            double totalSpent =
+                    calculatePassengerSpending(
+                            passenger
+                    );
+
+            double totalTopUp =
+                    roundCurrency(
+                            passenger.getBalance()
+                                    + totalSpent
+                    );
+
+            int ticketCount =
+                    countPassengerTickets(
+                            passenger
+                    );
+
+            System.out.println(
+                    "Passenger ID   : "
+                            + passenger.getUserId()
+            );
+
+            System.out.println(
+                    "Name           : "
+                            + passenger.getName()
+            );
+
+            System.out.printf(
+                    "Total Top Up   : RM %.2f%n",
+                    totalTopUp
+            );
+
+            System.out.printf(
+                    "Total Spent    : RM %.2f%n",
+                    totalSpent
+            );
+
+            System.out.printf(
+                    "Current Balance: RM %.2f%n",
+                    passenger.getBalance()
+            );
+
+            System.out.println(
+                    "Tickets Bought : "
+                            + ticketCount
+            );
+
+            System.out.println(
+                    "----------------------------------------"
+            );
+
+            systemTopUp +=
+                    totalTopUp;
+
+            systemSpent +=
+                    totalSpent;
+
+            systemBalance +=
+                    passenger.getBalance();
+        }
+
+        System.out.println();
+
+        System.out.println(
+                "ALL PASSENGERS"
+        );
+
+        System.out.println(
+                "----------------------------------------"
+        );
+
+        System.out.printf(
+                "Total Top Ups   : RM %.2f%n",
+                roundCurrency(
+                        systemTopUp
+                )
+        );
+
+        System.out.printf(
+                "Total Spending  : RM %.2f%n",
+                roundCurrency(
+                        systemSpent
+                )
+        );
+
+        System.out.printf(
+                "Wallet Balances : RM %.2f%n",
+                roundCurrency(
+                        systemBalance
+                )
+        );
+
+        System.out.println();
+
+        System.out.println(
+                "Note: Cancelled tickets remain spending"
+        );
+
+        System.out.println(
+                "because the current system has no refund feature."
+        );
+    }
+
+    /**
      * Displays a report for one calendar month.
      */
     public void generateMonthlyReport(
@@ -295,6 +451,58 @@ public class ReportService {
                         tickets
                 )
         );
+    }
+
+    /**
+     * Builds the all-time report and appends
+     * the bonus Passenger Financial Summary.
+     *
+     * Top-up totals are all-time values because
+     * the current data model does not store
+     * individual top-up timestamps.
+     */
+    public ArrayList<String> buildExportReport(
+            Map<String, User> users) {
+
+        ArrayList<String> report =
+                buildPeriodExportReport(
+                        "ALL-TIME SYSTEM REPORT",
+                        new ArrayList<>(
+                                tickets
+                        )
+                );
+
+        /*
+         * Remove the final divider temporarily,
+         * append the financial section, then
+         * restore the divider.
+         */
+        if (!report.isEmpty()
+                && report.get(
+                report.size() - 1
+        ).equals(
+                "========================================"
+        )) {
+
+            report.remove(
+                    report.size() - 1
+            );
+        }
+
+        appendPassengerFinancialSummary(
+                report,
+                users
+        );
+
+        report.add(
+                ""
+        );
+
+        report.add(
+                "========================================"
+        );
+
+        return report;
     }
 
     /**
@@ -1106,6 +1314,272 @@ public class ReportService {
                 "Maximum Fare: RM%.2f%n",
                 maximum
         );
+    }
+
+    /**
+     * Appends the all-time Passenger Financial
+     * Summary to an exportable report.
+     */
+    private void appendPassengerFinancialSummary(
+            ArrayList<String> report,
+            Map<String, User> users) {
+
+        report.add(
+                ""
+        );
+
+        report.add(
+                "PASSENGER FINANCIAL SUMMARY"
+        );
+
+        report.add(
+                "Scope: All Time"
+        );
+
+        ArrayList<Passenger> passengers =
+                getPassengers(
+                        users
+                );
+
+        if (passengers.isEmpty()) {
+
+            report.add(
+                    "No passenger accounts available."
+            );
+
+            return;
+        }
+
+        double systemTopUp =
+                0.00;
+
+        double systemSpent =
+                0.00;
+
+        double systemBalance =
+                0.00;
+
+        for (Passenger passenger :
+                passengers) {
+
+            double totalSpent =
+                    calculatePassengerSpending(
+                            passenger
+                    );
+
+            double totalTopUp =
+                    roundCurrency(
+                            passenger.getBalance()
+                                    + totalSpent
+                    );
+
+            report.add(
+                    "Passenger "
+                            + passenger.getUserId()
+                            + " - "
+                            + passenger.getName()
+            );
+
+            report.add(
+                    String.format(
+                            "Total Top Up: RM%.2f",
+                            totalTopUp
+                    )
+            );
+
+            report.add(
+                    String.format(
+                            "Total Spent: RM%.2f",
+                            totalSpent
+                    )
+            );
+
+            report.add(
+                    String.format(
+                            "Current Balance: RM%.2f",
+                            passenger.getBalance()
+                    )
+            );
+
+            report.add(
+                    "Tickets Bought: "
+                            + countPassengerTickets(
+                            passenger
+                    )
+            );
+
+            report.add(
+                    ""
+            );
+
+            systemTopUp +=
+                    totalTopUp;
+
+            systemSpent +=
+                    totalSpent;
+
+            systemBalance +=
+                    passenger.getBalance();
+        }
+
+        report.add(
+                "ALL PASSENGERS"
+        );
+
+        report.add(
+                String.format(
+                        "Total Top Ups: RM%.2f",
+                        roundCurrency(
+                                systemTopUp
+                        )
+                )
+        );
+
+        report.add(
+                String.format(
+                        "Total Spending: RM%.2f",
+                        roundCurrency(
+                                systemSpent
+                        )
+                )
+        );
+
+        report.add(
+                String.format(
+                        "Wallet Balances: RM%.2f",
+                        roundCurrency(
+                                systemBalance
+                        )
+                )
+        );
+
+        report.add(
+                "Refund Policy: Cancelled tickets are not refunded"
+        );
+    }
+
+    /**
+     * Returns Passenger accounts sorted by ID.
+     */
+    private ArrayList<Passenger> getPassengers(
+            Map<String, User> users) {
+
+        ArrayList<Passenger> passengers =
+                new ArrayList<>();
+
+        if (users == null) {
+            return passengers;
+        }
+
+        for (User user :
+                users.values()) {
+
+            if (user
+                    instanceof Passenger passenger) {
+
+                passengers.add(
+                        passenger
+                );
+            }
+        }
+
+        passengers.sort(
+                Comparator.comparing(
+                        Passenger::getUserId,
+                        String.CASE_INSENSITIVE_ORDER
+                )
+        );
+
+        return passengers;
+    }
+
+    /**
+     * Calculates all-time spending for one
+     * Passenger using actual Ticket fares.
+     *
+     * Cancelled Tickets are included because
+     * the current system does not issue refunds.
+     */
+    private double calculatePassengerSpending(
+            Passenger passenger) {
+
+        double total =
+                0.00;
+
+        for (Ticket ticket :
+                tickets) {
+
+            if (belongsToPassenger(
+                    ticket,
+                    passenger
+            )) {
+
+                total +=
+                        ticket.getFare();
+            }
+        }
+
+        return roundCurrency(
+                total
+        );
+    }
+
+    /**
+     * Counts all Tickets purchased by
+     * one Passenger, including cancelled Tickets.
+     */
+    private int countPassengerTickets(
+            Passenger passenger) {
+
+        int count =
+                0;
+
+        for (Ticket ticket :
+                tickets) {
+
+            if (belongsToPassenger(
+                    ticket,
+                    passenger
+            )) {
+
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    /**
+     * Compares Passenger IDs so restored Ticket
+     * relationships remain safe after persistence.
+     */
+    private boolean belongsToPassenger(
+            Ticket ticket,
+            Passenger passenger) {
+
+        if (ticket == null
+                || ticket.getPassenger() == null
+                || passenger == null) {
+
+            return false;
+        }
+
+        return ticket.getPassenger()
+                .getUserId()
+                .equalsIgnoreCase(
+                        passenger.getUserId()
+                );
+    }
+
+    /**
+     * Rounds monetary calculations to cents.
+     */
+    private double roundCurrency(
+            double amount) {
+
+        return Math.round(
+                amount * 100.0
+        ) / 100.0;
     }
 
     /**

@@ -1164,19 +1164,23 @@ public class Main {
             );
 
             System.out.println(
-                    "5. Monthly Report"
+                    "5. Passenger Financial Summary"
             );
 
             System.out.println(
-                    "6. Quarterly Report"
+                    "6. Monthly Report"
             );
 
             System.out.println(
-                    "7. Yearly Report"
+                    "7. Quarterly Report"
             );
 
             System.out.println(
-                    "8. Export Reports"
+                    "8. Yearly Report"
+            );
+
+            System.out.println(
+                    "9. Export Reports"
             );
 
             System.out.println();
@@ -1218,18 +1222,22 @@ public class Main {
                     break;
 
                 case "5":
-                    viewMonthlyReport();
+                    viewPassengerFinancialSummary();
                     break;
 
                 case "6":
-                    viewQuarterlyReport();
+                    viewMonthlyReport();
                     break;
 
                 case "7":
-                    viewYearlyReport();
+                    viewQuarterlyReport();
                     break;
 
                 case "8":
+                    viewYearlyReport();
+                    break;
+
+                case "9":
                     manageReportExports();
                     break;
 
@@ -1403,6 +1411,20 @@ public class Main {
     }
 
     /**
+     * Bonus all-time Passenger financial summary.
+     */
+    private static void viewPassengerFinancialSummary() {
+
+        clearScreen();
+
+        reportService.showPassengerFinancialSummary(
+                users
+        );
+
+        waitForBack();
+    }
+
+    /**
      * Monthly report.
      */
     private static void viewMonthlyReport() {
@@ -1557,7 +1579,9 @@ public class Main {
     private static void exportAllTimeReport() {
 
         ArrayList<String> report =
-                reportService.buildExportReport();
+                reportService.buildExportReport(
+                        users
+                );
 
         String format =
                 selectExportFormat();

@@ -52,6 +52,7 @@ public class PDFReportExporter {
                     "TICKET TYPE STATISTICS",
                     "ROUTE POPULARITY",
                     "FARE STATISTICS",
+                    "PASSENGER FINANCIAL SUMMARY",
                     "CANCELLED TICKETS",
                     "TICKET DETAILS"
             );
