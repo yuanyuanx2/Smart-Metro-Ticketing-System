@@ -19,39 +19,145 @@ public class TicketService {
     private FareCalculator fareCalculator;
 
     /**
-     * Creates a ticket service using the provided fare calculator.
+     * Creates a ticket service with an empty ticket list.
      */
-    public TicketService(FareCalculator fareCalculator) {
-        this.tickets = new ArrayList<>();
-        this.fareCalculator = fareCalculator;
+    public TicketService(
+            FareCalculator fareCalculator) {
+
+        this(
+                fareCalculator,
+                new ArrayList<>()
+        );
     }
 
     /**
-     * Creates and stores a new ticket for a passenger.
+     * Creates a ticket service using an existing ticket list.
+     *
+     * This constructor is used when restoring tickets
+     * from TXT storage so the same collection can be
+     * shared throughout the application.
      */
-    public Ticket buyTicket(Passenger passenger, Route route, TicketType type) {
+    public TicketService(
+            FareCalculator fareCalculator,
+            ArrayList<Ticket> tickets) {
 
-        // Calculate the fare using the FareCalculator interface.
-        double fare = fareCalculator.calculateFare(route, type);
+        this.fareCalculator =
+                fareCalculator;
 
-        // Generate a simple unique ticket ID.
-        String ticketId = String.format("TKT%03d", tickets.size() + 1);
+        if (tickets == null) {
 
-        Ticket ticket = new Ticket(
-                ticketId,
+            this.tickets =
+                    new ArrayList<>();
+
+        } else {
+
+            this.tickets =
+                    tickets;
+        }
+    }
+
+    /**
+     * Lecturer-required standard ticket purchase method.
+     *
+     * The normal fare is calculated using
+     * FareCalculator and no loyalty discount is applied.
+     */
+    public Ticket buyTicket(
+            Passenger passenger,
+            Route route,
+            TicketType type) {
+
+        double fare =
+                fareCalculator.calculateFare(
+                        route,
+                        type
+                );
+
+        return buyTicket(
                 passenger,
-                route.getSource(),
-                route.getDestination(),
+                route,
                 type,
-                TicketStatus.ACTIVE,
-                fare
+                fare,
+                false
+        );
+    }
+
+    /**
+     * Bonus-feature overload.
+     *
+     * Creates a Ticket using the actual final fare
+     * that was successfully paid by the Passenger.
+     *
+     * This allows a loyalty-discounted fare to be
+     * stored correctly without changing the lecturer's
+     * required FareCalculator interface.
+     */
+    public Ticket buyTicket(
+            Passenger passenger,
+            Route route,
+            TicketType type,
+            double finalFare,
+            boolean loyaltyDiscountApplied) {
+
+        if (passenger == null) {
+
+            throw new IllegalArgumentException(
+                    "Passenger cannot be null."
+            );
+        }
+
+        if (route == null) {
+
+            throw new IllegalArgumentException(
+                    "Route cannot be null."
+            );
+        }
+
+        if (type == null) {
+
+            throw new IllegalArgumentException(
+                    "Ticket type cannot be null."
+            );
+        }
+
+        if (finalFare < 0) {
+
+            throw new IllegalArgumentException(
+                    "Ticket fare cannot be negative."
+            );
+        }
+
+        String ticketId =
+                String.format(
+                        "TKT%03d",
+                        tickets.size() + 1
+                );
+
+        Ticket ticket =
+                new Ticket(
+                        ticketId,
+                        passenger,
+                        route.getSource(),
+                        route.getDestination(),
+                        type,
+                        TicketStatus.ACTIVE,
+                        finalFare,
+                        null,
+                        loyaltyDiscountApplied
+                );
+
+        /*
+         * Passenger.buyTicket() performs the
+         * wallet-balance check and deducts the
+         * Ticket's actual final fare.
+         */
+        passenger.buyTicket(
+                ticket
         );
 
-        // Deduct the ticket fare from the passenger's wallet.
-        passenger.buyTicket(ticket);
-
-        // Store the ticket only after the purchase is successful.
-        tickets.add(ticket);
+        tickets.add(
+                ticket
+        );
 
         return ticket;
     }
@@ -59,34 +165,51 @@ public class TicketService {
     /**
      * Cancels a ticket using its ticket ID.
      */
-    public void cancelTicket(String ticketId) throws TicketNotFoundException {
+    public void cancelTicket(
+            String ticketId)
+            throws TicketNotFoundException {
 
-        for (Ticket ticket : tickets) {
+        for (Ticket ticket :
+                tickets) {
 
-            if (ticket.getTicketId().equals(ticketId)) {
+            if (ticket.getTicketId()
+                    .equals(ticketId)) {
+
                 ticket.cancelTicket();
+
                 return;
             }
         }
 
         throw new TicketNotFoundException(
-                "Ticket ID not found: " + ticketId
+                "Ticket ID not found: "
+                        + ticketId
         );
     }
 
     /**
-     * Displays all tickets currently stored in the system.
+     * Displays all tickets currently stored
+     * in the system.
      */
     public void viewTickets() {
 
         if (tickets.isEmpty()) {
-            System.out.println("No tickets available.");
+
+            System.out.println(
+                    "No tickets available."
+            );
+
             return;
         }
 
-        for (Ticket ticket : tickets) {
+        for (Ticket ticket :
+                tickets) {
+
             ticket.printTicket();
-            System.out.println("-------------------------");
+
+            System.out.println(
+                    "-------------------------"
+            );
         }
     }
 }
