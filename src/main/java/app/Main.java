@@ -4869,10 +4869,52 @@ public class Main {
      */
     private static void clearScreen() {
 
-        System.out.print(
-                "\033[H\033[2J"
-        );
+        try {
 
-        System.out.flush();
+            String operatingSystem =
+                    System.getProperty(
+                            "os.name"
+                    ).toLowerCase(
+                            Locale.ROOT
+                    );
+
+            ProcessBuilder processBuilder;
+
+            if (operatingSystem.contains(
+                    "windows"
+            )) {
+
+                processBuilder =
+                        new ProcessBuilder(
+                                "cmd",
+                                "/c",
+                                "cls"
+                        );
+
+            } else {
+
+                processBuilder =
+                        new ProcessBuilder(
+                                "clear"
+                        );
+            }
+
+            processBuilder
+                    .inheritIO()
+                    .start()
+                    .waitFor();
+
+        } catch (Exception e) {
+
+            /*
+             * Fallback when the terminal
+             * cannot be cleared.
+             */
+            System.out.println(
+                    "\n".repeat(
+                            50
+                    )
+            );
+        }
     }
 }
