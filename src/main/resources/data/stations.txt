@@ -1,3 +1,5 @@
+STATION|S004|Kajang|Kajang
 STATION|S001|KL Sentral|Kuala Lumpur
-STATION|S002|Pasar Seni|Kuala Lumpur
 STATION|S003|Masjid Jamek|Kuala Lumpur
+STATION|S002|Pasar Seni|Kuala Lumpur
+STATION|S005|Putrajaya Sentral|Putrajaya

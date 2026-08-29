@@ -22,6 +22,7 @@ import report.PDFReportExporter;
 import repository.JSONFileManager;
 import repository.TXTFileManager;
 import service.JSONBackupService;
+import service.LoyaltyDiscountService;
 import service.PaymentService;
 import service.ReportService;
 import service.RouteService;
@@ -34,6 +35,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Scanner;
 
 /**
@@ -96,6 +98,18 @@ public class Main {
 
     private static final PaymentService paymentService =
             new PaymentService();
+
+    /*
+     * Bonus loyalty-discount service.
+     *
+     * Uses the same live Ticket collection so
+     * reward eligibility is based on the
+     * Passenger's current Ticket history.
+     */
+    private static final LoyaltyDiscountService loyaltyDiscountService =
+            new LoyaltyDiscountService(
+                    tickets
+            );
 
     private static UserService userService;
     private static StationService stationService;
@@ -583,7 +597,8 @@ public class Main {
 
         String userId =
                 scanner.nextLine()
-                        .trim();
+                        .trim()
+                        .toUpperCase(Locale.ROOT);
 
         System.out.print(
                 "Name: "
@@ -2338,7 +2353,8 @@ public class Main {
 
         String stationId =
                 scanner.nextLine()
-                        .trim();
+                        .trim()
+                        .toUpperCase(Locale.ROOT);
 
         if (stationId.equalsIgnoreCase("X")) {
             return;
@@ -2625,7 +2641,8 @@ public class Main {
 
         String trainId =
                 scanner.nextLine()
-                        .trim();
+                        .trim()
+                        .toUpperCase(Locale.ROOT);
 
         if (trainId.equalsIgnoreCase("X")) {
             return;
@@ -2874,7 +2891,8 @@ public class Main {
 
         String routeId =
                 scanner.nextLine()
-                        .trim();
+                        .trim()
+                        .toUpperCase(Locale.ROOT);
 
         if (routeId.equalsIgnoreCase("X")) {
             return;
@@ -3582,8 +3600,10 @@ public class Main {
      * Passenger Ticket purchasing workflow.
      *
      * Route and Ticket Type are selected first.
-     * Fare is calculated.
-     * Payment is processed.
+     * Standard fare is calculated.
+     * A one-time loyalty reward is applied
+     * when the Passenger is eligible.
+     * Payment is processed using the final fare.
      * Only after successful payment is
      * the Ticket issued and stored.
      */
@@ -3646,11 +3666,38 @@ public class Main {
             return;
         }
 
-        double fare =
+        /*
+         * Lecturer-required standard fare
+         * calculation remains unchanged.
+         */
+        double standardFare =
                 fareCalculator.calculateFare(
                         selectedRoute,
                         ticketType
                 );
+
+        /*
+         * Bonus loyalty-discount calculation.
+         */
+        boolean loyaltyDiscountApplied =
+                loyaltyDiscountService
+                        .isDiscountAvailable(
+                                passenger
+                        );
+
+        double discountAmount =
+                loyaltyDiscountService
+                        .calculateDiscountAmount(
+                                passenger,
+                                standardFare
+                        );
+
+        double finalFare =
+                loyaltyDiscountService
+                        .calculateFinalFare(
+                                passenger,
+                                standardFare
+                        );
 
         boolean continuePurchase =
                 confirmActiveTicketWarning(
@@ -3677,7 +3724,7 @@ public class Main {
         System.out.println();
 
         System.out.println(
-                "Route       : "
+                "Route          : "
                         + selectedRoute
                         .getSource()
                         .getName()
@@ -3688,24 +3735,70 @@ public class Main {
         );
 
         System.out.println(
-                "Ticket Type : "
+                "Ticket Type    : "
                         + ticketType
         );
 
         System.out.printf(
-                "Fare        : RM %.2f%n",
-                fare
+                "Standard Fare  : RM %.2f%n",
+                standardFare
+        );
+
+        System.out.println();
+
+        if (loyaltyDiscountApplied) {
+
+            System.out.println(
+                    "Loyalty Status : REWARD AVAILABLE"
+            );
+
+            System.out.println(
+                    "Reward         : One-time 20% discount"
+            );
+
+            System.out.printf(
+                    "Discount       : -RM %.2f%n",
+                    discountAmount
+            );
+
+        } else {
+
+            double progress =
+                    loyaltyDiscountService
+                            .getProgressTowardNextReward(
+                                    passenger
+                            );
+
+            System.out.println(
+                    "Loyalty Status : Not yet eligible"
+            );
+
+            System.out.printf(
+                    "Loyalty Progress: RM %.2f / RM 100.00%n",
+                    progress
+            );
+        }
+
+        System.out.println();
+
+        System.out.printf(
+                "Final Fare     : RM %.2f%n",
+                finalFare
         );
 
         System.out.printf(
-                "Balance     : RM %.2f%n",
+                "Balance        : RM %.2f%n",
                 passenger.getBalance()
         );
 
         System.out.println();
 
+        /*
+         * Balance is checked against the
+         * actual final amount to be paid.
+         */
         if (passenger.getBalance()
-                < fare) {
+                < finalFare) {
 
             System.out.println(
                     "Insufficient balance."
@@ -3746,13 +3839,15 @@ public class Main {
         }
 
         /*
-         * Payment must succeed before
-         * Ticket creation.
+         * Real-world purchase order:
+         *
+         * Payment must succeed before the Ticket
+         * is created or the loyalty reward is used.
          */
         boolean paymentSuccessful =
                 paymentService.processPayment(
                         payment,
-                        fare
+                        finalFare
                 );
 
         if (!paymentSuccessful) {
@@ -3767,6 +3862,13 @@ public class Main {
                     "No ticket was created."
             );
 
+            if (loyaltyDiscountApplied) {
+
+                System.out.println(
+                        "Your loyalty reward was not used."
+                );
+            }
+
             waitForBack();
 
             return;
@@ -3774,11 +3876,18 @@ public class Main {
 
         try {
 
+            /*
+             * Only after successful payment do we
+             * create/store the Ticket using the
+             * actual amount that was paid.
+             */
             Ticket ticket =
                     ticketService.buyTicket(
                             passenger,
                             selectedRoute,
-                            ticketType
+                            ticketType,
+                            finalFare,
+                            loyaltyDiscountApplied
                     );
 
             clearScreen();
@@ -3797,6 +3906,19 @@ public class Main {
                     "Your ticket has now been issued."
             );
 
+            if (loyaltyDiscountApplied) {
+
+                System.out.println();
+
+                System.out.println(
+                        "Your one-time 20% loyalty reward"
+                );
+
+                System.out.println(
+                        "was successfully used."
+                );
+            }
+
             System.out.println();
 
             ticket.printTicket();
@@ -3807,6 +3929,36 @@ public class Main {
                     "Remaining Balance: RM %.2f%n",
                     passenger.getBalance()
             );
+
+            System.out.println();
+
+            int availableRewards =
+                    loyaltyDiscountService
+                            .getAvailableRewardCount(
+                                    passenger
+                            );
+
+            if (availableRewards > 0) {
+
+                System.out.println(
+                        "Loyalty Status   : "
+                                + availableRewards
+                                + " reward(s) available"
+                );
+
+            } else {
+
+                double progress =
+                        loyaltyDiscountService
+                                .getProgressTowardNextReward(
+                                        passenger
+                                );
+
+                System.out.printf(
+                        "Loyalty Progress : RM %.2f / RM 100.00%n",
+                        progress
+                );
+            }
 
         } catch (IllegalArgumentException e) {
 
