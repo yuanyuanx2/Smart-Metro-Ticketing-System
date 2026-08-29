@@ -33,4 +33,68 @@
 
     </dependencies>
 
+    <build>
+
+        <!-- Final runnable JAR name -->
+        <finalName>Smart-Metro-Ticketing-System</finalName>
+
+        <plugins>
+
+            <!--
+                Creates one runnable JAR containing:
+                - our compiled classes
+                - Jackson dependencies
+                - PDFBox dependencies
+                - Main-Class manifest
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.6.0</version>
+
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+
+                        <configuration>
+
+                            <!-- Keep the normal pom.xml unchanged -->
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+
+                            <!--
+                                Remove signature files that can cause
+                                SecurityException after dependencies
+                                are combined into one JAR.
+                            -->
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+
+                            <!-- Tell Java which class starts the program -->
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>app.Main</mainClass>
+                                </transformer>
+                            </transformers>
+
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
+
+    </build>
+
 </project>
